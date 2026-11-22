@@ -23,7 +23,10 @@
 <div class="card doctor-banner">
     <span>🩺 <strong>Shared report, read-only.</strong> Shared by the patient through ReportSaathi.
         Link valid until {{ link['expires_at'] }} UTC.</span>
-    <button type="button" class="button-light no-print" onclick="window.print()">🖨️ Print</button>
+    <span class="actions no-print" style="margin: 0;">
+        <button type="button" class="button-light" onclick="window.print()">🖨️ Print</button>
+        <a class="button" href="{{ url_for('shared.pdf', token=link['token']) }}" target="_blank" rel="noopener">⬇️ Download PDF</a>
+    </span>
 </div>
 
 <div class="review-head" style="margin-top: 20px;">

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+{#
+  A clean, white, A4-shaped version of one report. When the page opens, html2pdf.js
+  (html2canvas + jsPDF) draws the #pdf-doc element and downloads it as a PDF file.
+  It's built in the browser so Hindi (Devanagari) text appears exactly as on screen.
+  Used for the patient (for_doctor = False) and for a doctor's share link (for_doctor = True).
+#}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ file_name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #e5e7eb;
+            color: #0f2a2e;
+            font-family: "Plus Jakarta Sans", "Noto Sans Devanagari", Arial, sans-serif;
+        }
+
+        /* Toolbar: only on screen, never in the PDF. */
+        .toolbar {
+            position: sticky;
+            top: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #0f2a2e;
+            color: white;
+        }
+
+        .toolbar button,
+        .toolbar a {
+            padding: 8px 14px;
+            border: 0;
+            border-radius: 8px;
+            background: #14b8a6;
+            color: white;
+            font: inherit;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .toolbar a.light { background: transparent; border: 1px solid #5eead4; }
+
+        /* The document: 760px wide is roughly an A4 page at screen size. */
+        #pdf-doc {
+            width: 760px;
+            max-width: 100%;
+            margin: 24px auto;
+            padding: 32px 36px;
+            background: white;
+            font-size: 12.5px;
+            line-height: 1.5;
+        }
+
+        .doc-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 14px;
+            border-bottom: 3px solid #0d9488;
+        }
+
+        .brand { font-size: 22px; font-weight: 800; color: #0f766e; }
+        .doc-title { margin: 2px 0 0; color: #475569; font-weight: 600; }
+        .generated { text-align: right; color: #64748b; font-size: 11px; }
+
+        .patient {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px 18px;
+            margin: 16px 0;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background: #f0fdfa;
+        }
+
+        .label { display: block; color: #64748b; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+        .patient strong { font-size: 13.5px; }
+
+        .scores { display: flex; gap: 10px; margin-bottom: 14px; }
+
+        .score {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .score b { display: block; font-size: 20px; }
+
+        .critical {
+            margin-bottom: 14px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: #dc2626;
+            color: white;
+            font-weight: 700;
+        }
+
+        h2 {
+            margin: 18px 0 8px;
+            color: #0f766e;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .summary { margin: 0; padding: 12px 14px; border-left: 4px solid #0d9488; background: #f8fafc; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 7px 8px; background: #0f766e; color: white; font-size: 11px; text-align: left; }
+        td { padding: 7px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+        tr.category td { padding-top: 10px; background: #f1f5f9; color: #0f766e; font-weight: 800; }
+        tr.flagged td { background: #fef2f2; }
+        .value { font-weight: 800; }
+        .low { color: #1d4ed8; }
+        .high, .abnormal { color: #dc2626; }
+        .normal { color: #047857; }
+        .muted { color: #64748b; }
+
+        .status {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 800;
+            border: 1px solid currentColor;
+        }
+
+        .status.crit { background: #dc2626; color: white; border-color: #dc2626; }
+
+        ol { margin: 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+
+        .disclaimer {
+            margin-top: 18px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 10.5px;
+        }
+
+        .avoid-break { break-inside: avoid; }
+
+        @media print {
+            body { background: white; }
+            .toolbar { display: none; }
+            #pdf-doc { margin: 0; padding: 0; width: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <span id="status">⏳ Preparing your PDF…</span>
+        <span>
+            <button type="button" id="download-again" hidden>⬇️ Download again</button>
+            <button type="button" onclick="window.print()">🖨️ Print</button>
+            {% if not for_doctor %}
+                <a class="light" href="{{ url_for('reports.view_report', report_id=report['id']) }}">← Back to report</a>
+            {% endif %}
+        </span>
+    </div>
+
+    <div id="pdf-doc">
+        <div class="doc-head">
+            <div>
+                <div class="brand">🩺 ReportSaathi</div>
+                <p class="doc-title">Lab report summary{% if for_doctor %} · shared with doctor{% endif %}</p>
+            </div>
+            <div class="generated">Generated {{ now_date }}<br>{{ report['lab_name'] }}</div>
+        </div>
+
+        <div class="patient">
+            <div><span class="label">Patient</span><strong>{{ report['profile_name'] }}</strong></div>
+            <div><span class="label">Age / Sex</span><strong>{{ age ~ ' yrs' if age else '–' }} / {{ report['sex'] or '–' }}</strong></div>
+            <div><span class="label">Report date</span><strong>{{ report['report_date'] }}</strong></div>
+            <div><span class="label">Laboratory</span><strong>{{ report['lab_name'] }}</strong></div>
+            <div><span class="label">Tests</span><strong>{{ total }}</strong></div>
+            <div><span class="label">Explained in</span><strong>{{ report['language'] }}</strong></div>
+        </div>
+
+        <div class="scores avoid-break">
+            <div class="score"><b class="normal">{{ counts['normal'] }}</b>In range</div>
+            <div class="score"><b class="high">{{ counts['flagged'] }}</b>Outside range</div>
+            <div class="score"><b>{{ score ~ '%' if score is not none else '–' }}</b>Health score</div>
+            <div class="score"><b>{{ counts['corrected'] }}</b>Values checked &amp; corrected</div>
+        </div>
+
+        {% if counts['critical'] %}
+            <div class="critical">⚠ {{ counts['critical'] }} result{{ '' if counts['critical'] == 1 else 's' }} far outside the reference range. Please consult a doctor promptly.</div>
+        {% endif %}
+
+        {% if not for_doctor %}
+            <h2>In simple words</h2>
+            <p class="summary avoid-break">{{ report['summary'] }}</p>
+        {% endif %}
+
+        <h2>Results</h2>
+        <table>
+            <thead>
+                <tr><th>Test</th><th>Result</th><th>Unit</th><th>Reference</th><th>Status</th><th>Previous</th></tr>
+            </thead>
+            <tbody>
+                {% for category, results in categories.items() %}
+                    <tr class="category"><td colspan="6">{{ category }}</td></tr>
+                    {% for r in results %}
+                        {% set before = previous.get(r['canonical_name']) %}
+                        <tr class="{{ 'flagged' if r['status'] in ('low', 'high', 'abnormal') }}">
+                            <td>{{ r['name'] }}{% if r['corrected'] %} <span class="muted">(entered by patient)</span>{% endif %}</td>
+                            <td class="value {{ r['status'] }}">{{ r['value_text'] }}</td>
+                            <td>{{ r['unit'] }}</td>
+                            <td class="muted">{{ r['ref_text'] or '–' }}</td>
+                            <td>
+                                {% if r['critical'] %}<span class="status crit">CRITICAL</span>
+                                {% else %}<span class="status {{ r['status'] }}">{{ r['status']|upper }}</span>{% endif %}
+                            </td>
+                            <td class="muted">{{ before['value_text'] ~ ' (' ~ before['report_date'] ~ ')' if before else '–' }}</td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if doctor_questions %}
+            <div class="avoid-break">
+                <h2>Questions to ask your doctor</h2>
+                <ol>{% for q in doctor_questions %}<li>{{ q }}</li>{% endfor %}</ol>
+            </div>
+        {% endif %}
+
+        <div class="disclaimer avoid-break">
+            Values were read from the uploaded lab report by AI and checked by the patient. This summary
+            helps understand the report; it is not a diagnosis. Always confirm important values against
+            the original report and discuss results with a qualified doctor.
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        var fileName = {{ file_name|tojson }};
+        // Not called "status": that name is already taken by the browser (window.status).
+        var statusText = document.getElementById("status");
+        var again = document.getElementById("download-again");
+
+        function makePdf() {
+            statusText.textContent = "⏳ Preparing your PDF…";
+            return html2pdf().set({
+                margin: [10, 8, 12, 8],                    // mm: top, left, bottom, right
+                filename: fileName,
+                image: { type: "jpeg", quality: 0.95 },
+                html2canvas: { scale: 2, useCORS: true },  // scale 2 = sharp text
+                jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+                pagebreak: { mode: ["css", "legacy"], avoid: ["tr", ".avoid-break"] },
+            }).from(document.getElementById("pdf-doc")).save().then(function () {
+                statusText.textContent = "✅ Downloaded " + fileName;
+                again.hidden = false;
+            }).catch(function () {
+                statusText.textContent = "⚠️ Couldn't build the PDF here. Use Print → Save as PDF instead.";
+            });
+        }
+
+        again.addEventListener("click", makePdf);
+        if (typeof html2pdf === "undefined") {
+            statusText.textContent = "⚠️ PDF library didn't load (offline?). Use Print → Save as PDF instead.";
+        } else {
+            // Wait for the fonts (including Hindi) so they appear correctly in the PDF.
+            document.fonts.ready.then(makePdf);
+        }
+    </script>
+</body>
+</html>

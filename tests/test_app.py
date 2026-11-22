@@ -290,6 +290,56 @@ def test_cannot_share_someone_elses_report(client, monkeypatch):
     assert client.post("/reports/1/share", data={"hours": "24"}).status_code == 404
 
 
+# ---------- Download as PDF ----------
+
+def test_pdf_page_has_report_and_file_name(client, monkeypatch):
+    monkeypatch.setattr(reports, "read_report", fake_read_report)
+    register_and_login(client)
+    upload_and_save(client)
+    assert b"Download PDF" in client.get("/reports/1").data
+    page = client.get("/reports/1/pdf")
+    assert page.status_code == 200
+    assert b"html2pdf" in page.data
+    assert b"ReportSaathi_asha_2026-10-01.pdf" in page.data
+    assert b"10.5" in page.data and b"Haemoglobin is a little low" in page.data
+    assert b"Do I need iron tablets?" in page.data
+
+
+def test_pdf_file_name_is_safe():
+    from helpers import pdf_file_name
+    assert pdf_file_name({"profile_name": "Ram/Shyam ..\\x", "report_date": "2026-01-02"}) == \
+        "ReportSaathi_Ram_Shyam_x_2026-01-02.pdf"
+    assert pdf_file_name({"profile_name": "सुनीता", "report_date": "2026-01-02"}) == \
+        "ReportSaathi_Report_2026-01-02.pdf"
+
+
+def test_cannot_download_someone_elses_pdf(client, monkeypatch):
+    monkeypatch.setattr(reports, "read_report", fake_read_report)
+    register_and_login(client, "asha")
+    upload_and_save(client)
+    client.get("/logout")
+    register_and_login(client, "ravi")
+    assert client.get("/reports/1/pdf").status_code == 404
+
+
+def test_doctor_can_download_shared_pdf(client, monkeypatch):
+    monkeypatch.setattr(reports, "read_report", fake_read_report)
+    register_and_login(client)
+    upload_and_save(client)
+    token = share_token(client)
+    client.get("/logout")
+    page = client.get(f"/s/{token}/pdf")
+    assert page.status_code == 200
+    assert b"shared with doctor" in page.data
+    assert b"Do I need iron tablets?" not in page.data   # patient-only section left out
+    assert page.headers["Referrer-Policy"] == "no-referrer"
+
+    client.post("/login", data={"username": "asha", "password": "secret123"})
+    client.post("/reports/1/share/1/revoke")
+    client.get("/logout")
+    assert client.get(f"/s/{token}/pdf").status_code == 410  # turned off: no PDF either
+
+
 def test_old_database_is_migrated(tmp_path):
     """A results table from the first version (no 'corrected' column) gets the column added."""
     import sqlite3

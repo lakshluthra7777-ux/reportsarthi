@@ -11,7 +11,7 @@ from ai import LANGUAGES, AIError, ask_about_report, read_report
 from database import get_db
 from helpers import (
     apply_correction, format_number, get_own_pending, get_own_profile, get_own_report,
-    login_required, report_details, save_report,
+    login_required, pdf_file_name, report_details, save_report,
 )
 
 bp = Blueprint("reports", __name__, url_prefix="/reports")
@@ -197,6 +197,19 @@ def view_report(report_id):
         "report_detail.html", report=report, **details,
         doctor_questions=json.loads(report["doctor_questions"]), questions=questions,
         links=links, base_url=base_url, share_choices=SHARE_HOURS,
+    )
+
+
+@bp.route("/<int:report_id>/pdf")
+@login_required
+def download_pdf(report_id):
+    """A clean white version of the report; the browser turns it into a PDF and downloads it."""
+    report = get_own_report(report_id)
+    age = date.today().year - report["birth_year"] if report["birth_year"] else None
+    return render_template(
+        "report_pdf.html", report=report, age=age, for_doctor=False, now_date=date.today().isoformat(),
+        doctor_questions=json.loads(report["doctor_questions"]),
+        file_name=pdf_file_name(report), **report_details(get_db(), report),
     )
 
 

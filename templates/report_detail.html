@@ -27,6 +27,7 @@
             · {{ counts['corrected'] }} of {{ total }} corrected
         </span>
         <a class="button button-light" href="{{ url_for('reports.edit_report', report_id=report['id']) }}">✏️ Fix a value</a>
+        <a class="button" href="{{ url_for('reports.download_pdf', report_id=report['id']) }}" target="_blank" rel="noopener">⬇️ Download PDF</a>
     </div>
 </div>
 <h1 style="margin: 10px 0 4px;">{{ report['profile_name'] }}'s report</h1>

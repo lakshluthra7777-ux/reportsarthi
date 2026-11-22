@@ -2,6 +2,7 @@
 
 import functools
 import json
+import re
 
 from flask import abort, flash, g, redirect, url_for
 
@@ -113,6 +114,16 @@ def report_details(db, report):
     ]
     return {"categories": categories, "counts": counts, "previous": previous,
             "total": len(results), "score": score, "category_flags": category_flags}
+
+
+def pdf_file_name(report):
+    """A safe file name like 'ReportSaathi_Sunita_2026-09-05.pdf'.
+
+    Only letters, numbers, '-' and '_' are kept, so a name like 'Ram/Shyam' can't create
+    a strange path when the browser saves the file.
+    """
+    name = re.sub(r"[^A-Za-z0-9_-]+", "_", report["profile_name"]).strip("_") or "Report"
+    return f"ReportSaathi_{name}_{report['report_date']}.pdf"
 
 
 def get_own_pending(pending_id):

@@ -254,6 +254,23 @@ with names blacked out) and record accuracy. Real numbers make the results chapt
 - **Why does the patient's page and the doctor's page always match?** Both use the same
   `report_details()` helper and the same `range_bar` macro (`templates/_macros.html`).
 
+### Download as PDF
+
+- **How is the PDF made?** `/reports/<id>/pdf` renders a plain white A4-shaped page
+  (`report_pdf.html`). In the browser, html2pdf.js draws it onto a canvas (html2canvas) and
+  puts that into an A4 PDF (jsPDF), then downloads it as `ReportSaathi_<name>_<date>.pdf`.
+- **Why in the browser and not with a Python PDF library?** Explanations can be in Hindi.
+  Devanagari letters join and change shape (text shaping); Python PDF libraries need extra
+  font files and a shaping engine for that. The browser already renders Hindi correctly,
+  so the PDF looks exactly like the page. Trade-off: text in the PDF is an image (not
+  selectable) and needs the CDN script; Print → Save as PDF is the fallback.
+- **Page breaks:** `pagebreak: {avoid: ["tr", ".avoid-break"]}` stops a table row or a
+  section being cut in half between pages.
+- **Safe file names:** `pdf_file_name()` keeps only letters, numbers, `-` and `_`, so a
+  name like `Ram/Shyam` can't create a strange path when the file is saved.
+- **Doctor's copy:** `/s/<token>/pdf` goes through the same link checks (expiry, revoked)
+  and leaves out patient-only parts like the doctor questions.
+
 ### Choice of AI
 
 - **Why Gemini?** It has a free tier (good for a student project), reads PDFs and photos
@@ -280,7 +297,7 @@ with names blacked out) and record accuracy. Real numbers make the results chapt
 
 21. **How did you test without spending money on the API?**
     pytest with Flask's test client, a fresh temporary database per test, and
-    `monkeypatch` replacing the AI functions with fakes. 48 tests cover login, the review and correction flow, share links (expiry, revoking, access), the database migration, access
+    `monkeypatch` replacing the AI functions with fakes. 52 tests cover login, PDF downloads, the review and correction flow, share links (expiry, revoking, access), the database migration, access
     control, file validation, extraction cleaning, the status logic, sample data, trends,
     Q&A and deletion.
 

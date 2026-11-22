@@ -22,6 +22,7 @@ member's results over time with charts.
 | Check before saving | **Human-in-the-loop review screen**: the user compares the AI's values with the paper report, fixes or removes rows (status updates live), then saves |
 | Fix a value later | Any saved report can be corrected; corrected values are marked ✏️ |
 | AI accuracy | Each report shows how many values the user had to correct, e.g. "AI accuracy 95% · 1 of 20 corrected" |
+| Download as PDF | A clean A4 PDF (patient details, summary, colour-coded results table with previous values, doctor questions) built in the browser with html2pdf.js, so Hindi text works; also available from a doctor's share link |
 | Share with doctor | A secret link + **QR code** opens a read-only, printable copy of one report without login; it expires (24 h / 3 days / 7 days), can be turned off, and counts views |
 | Plain-language explanations | Summary, per-test explanation and doctor questions in **English, Hindi or Hinglish** |
 | Urgent alerts | Values far outside the range get an URGENT badge and a red banner |
@@ -32,7 +33,7 @@ member's results over time with charts.
 | Privacy by design | The uploaded file is never stored; only the extracted values are kept |
 | Security | Password hashing, parameterised SQL, per-user access checks, file-type check by magic bytes, upload size limits, HttpOnly cookies |
 | Demo mode | "Load sample data" adds a family with 6 reports, no API key needed |
-| Testing | 48 automated pytest tests; the AI is replaced with fakes |
+| Testing | 52 automated pytest tests; the AI is replaced with fakes |
 
 ## Tech stack
 
@@ -62,7 +63,7 @@ reportsaathi/
 │   └── reports.py          # upload, results page, ask a question, delete
 ├── templates/          # Jinja2 pages (all extend base.html)
 ├── static/             # style.css (base design), app.css (results, charts)
-├── tests/test_app.py   # 48 tests
+├── tests/test_app.py   # 52 tests
 └── docs/VIVA_PREP.md   # Architecture, design decisions, report outline, viva Q&A
 ```
 
