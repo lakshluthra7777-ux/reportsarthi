@@ -566,6 +566,60 @@ def test_missing_api_key_gives_clear_error(monkeypatch):
         ai.read_report(PDF_BYTES, "application/pdf", "English", "Female, age 30")
 
 
+# ---------- Model fallback and retries (fake Gemini client, no internet needed) ----------
+
+def fake_gemini(monkeypatch, script):
+    """Replace genai.Client with a fake that replays `script`: one entry per call,
+    either an HTTP error code (int) or the string "ok". Returns the list of models called."""
+    from types import SimpleNamespace
+    from google.genai import errors, types
+    calls = []
+
+    def generate_content(model, contents, config):
+        calls.append(model)
+        step = script.pop(0)
+        if step == "ok":
+            return SimpleNamespace(prompt_feedback=None, text="fine",
+                                   candidates=[SimpleNamespace(finish_reason=types.FinishReason.STOP)])
+        raise errors.APIError(step, {"error": {"code": step, "message": f"error {step}"}})
+
+    monkeypatch.setattr(ai.genai, "Client",
+                        lambda api_key, **options: SimpleNamespace(models=SimpleNamespace(generate_content=generate_content)))
+    monkeypatch.setattr(ai.time, "sleep", lambda seconds: None)
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    return calls
+
+
+def test_busy_model_is_retried_once(monkeypatch):
+    calls = fake_gemini(monkeypatch, [503, "ok"])
+    assert ai.ask_ai("system", "hello") == "fine"
+    assert calls == [ai.MODELS[0], ai.MODELS[0]]
+
+
+def test_missing_model_falls_back_to_next(monkeypatch):
+    calls = fake_gemini(monkeypatch, [404, "ok"])
+    assert ai.ask_ai("system", "hello") == "fine"
+    assert calls == ai.MODELS[:2]
+
+
+def test_all_models_busy_gives_clear_message(monkeypatch):
+    fake_gemini(monkeypatch, [503] * (2 * len(ai.MODELS)))
+    with pytest.raises(ai.AIError, match="very busy"):
+        ai.ask_ai("system", "hello")
+
+
+def test_all_models_over_limit(monkeypatch):
+    fake_gemini(monkeypatch, [429] * len(ai.MODELS))
+    with pytest.raises(ai.AIError, match="limit reached"):
+        ai.ask_ai("system", "hello")
+
+
+def test_bad_file_message_only_for_400(monkeypatch):
+    fake_gemini(monkeypatch, [400])
+    with pytest.raises(ai.AIError, match="couldn't open this file"):
+        ai.ask_ai("system", "hello")
+
+
 def test_non_report_file_is_refused(monkeypatch):
     monkeypatch.setattr(ai, "ask_ai", lambda *a, **k: {**fake_ai_reply(), "is_lab_report": False})
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")

@@ -6,7 +6,9 @@
 # or a scanned report works. No separate OCR library is needed.
 
 import json
+import logging
 import os
+import time
 from datetime import date
 
 import httpx2  # the HTTP library google-genai uses; we catch its network errors
@@ -15,9 +17,11 @@ from google.genai import errors, types
 
 from ranges import decide_status, parse_number
 
-# Tried in order: if the first model is overloaded (HTTP 503) or over its free-tier
-# limit (HTTP 429), the request is retried on the next one.
-MODELS = ["gemini-3.5-flash", "gemini-2.5-flash"]
+# Tried in order. If a model is overloaded (503), too slow (timeout), over its free-tier
+# limit (429) or no longer offered (404), the request moves on to the next one.
+# Google changes which models are free, so check this list if uploads start failing.
+MODELS = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.8-flash"]
+TIMEOUT_MS = 90_000  # give up on one model after 90 seconds and try the next
 LANGUAGES = ["English", "Hindi", "Hinglish"]
 
 # Common test names, so the same test gets the same name on every report.
@@ -30,6 +34,9 @@ STANDARD_NAMES = (
     "SGOT (AST), Alkaline Phosphatase, Total Bilirubin, Albumin, TSH, Free T3, Free T4, "
     "Vitamin D (25-OH), Vitamin B12, Iron, Ferritin, Calcium, Sodium, Potassium, CRP"
 )
+
+
+log = logging.getLogger(__name__)  # warnings appear in the terminal running the app
 
 
 class AIError(Exception):
@@ -52,26 +59,44 @@ def ask_ai(system, content, schema=None):
         config.response_mime_type = "application/json"
         config.response_json_schema = schema
 
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=TIMEOUT_MS))
     response = None
+    busy = limited = False
+    # Try each model in turn. A model that is busy gets one more try after a short pause.
     for model in MODELS:
-        try:
-            response = client.models.generate_content(model=model, contents=content, config=config)
+        for attempt in (1, 2):
+            try:
+                response = client.models.generate_content(model=model, contents=content, config=config)
+                break
+            except errors.APIError as error:
+                # Log the real reason in the server window, to help with debugging.
+                log.warning("Gemini %s failed (attempt %d): %s %s", model, attempt, error.code, error.message)
+                if error.code in (401, 403) or "API key" in str(error.message):
+                    raise AIError("The AI service rejected the API key. Check GEMINI_API_KEY in .env.")
+                if error.code == 503 and attempt == 1:
+                    busy = True
+                    time.sleep(2)   # overloaded: wait a moment and try this model once more
+                    continue
+                if error.code in (404, 429, 500, 503, 504):
+                    busy = busy or error.code in (500, 503, 504)
+                    limited = limited or error.code == 429
+                    break           # model missing, over its limit or still busy: try the next one
+                if error.code == 400:
+                    raise AIError("The AI couldn't open this file. Try a clearer photo or a different PDF.")
+                raise AIError(f"The AI service returned an error ({error.code}). Please try again.")
+            except httpx2.TimeoutException:  # this model took too long: try the next one
+                log.warning("Gemini %s timed out", model)
+                busy = True
+                break
+            except httpx2.TransportError:  # no internet, DNS failure...
+                raise AIError("Could not reach the AI service. Check your internet connection.")
+        if response is not None:
             break
-        except errors.ClientError as error:
-            if error.code == 429 and model != MODELS[-1]:
-                continue  # free-tier limit for this model reached: try the next model
-            if error.code == 429:
-                raise AIError("Free AI limit reached. Please wait a minute and try again.")
-            if error.code in (401, 403) or "API key" in str(error.message):
-                raise AIError("The AI service rejected the API key. Check GEMINI_API_KEY in .env.")
-            raise AIError("The AI couldn't open this file. Try a clearer photo or a different PDF.")
-        except errors.ServerError:
-            if model != MODELS[-1]:
-                continue  # model overloaded (503): try the next model
-            raise AIError("The AI service is busy right now. Please try again in a minute.")
-        except httpx2.TransportError:  # no internet, DNS failure, timeout...
-            raise AIError("Could not reach the AI service. Check your internet connection.")
+
+    if response is None:  # every model failed
+        if limited and not busy:
+            raise AIError("Free AI limit reached for now. Please wait a minute and try again.")
+        raise AIError("Google's free AI service is very busy right now. Please try again in a minute or two.")
 
     # The model may stop early: blocked by safety filters, or the answer was too long.
     if response.prompt_feedback and response.prompt_feedback.block_reason:

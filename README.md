@@ -34,7 +34,7 @@ member's results over time with charts.
 | Privacy by design | The uploaded file is never stored; only the extracted values are kept |
 | Security | Password hashing, parameterised SQL, per-user access checks, file-type check by magic bytes, upload size limits, HttpOnly cookies |
 | Demo mode | "Load sample data" adds a family with 6 reports, no API key needed |
-| Testing | 61 automated pytest tests; the AI is replaced with fakes |
+| Testing | 66 automated pytest tests; the AI is replaced with fakes |
 
 ## Tech stack
 
@@ -64,7 +64,7 @@ reportsaathi/
 │   └── reports.py          # upload, results page, ask a question, delete
 ├── templates/          # Jinja2 pages (all extend base.html)
 ├── static/             # style.css (base design), app.css (results, charts)
-├── tests/test_app.py   # 61 tests
+├── tests/test_app.py   # 66 tests
 └── docs/VIVA_PREP.md   # Architecture, design decisions, report outline, viva Q&A
 ```
 

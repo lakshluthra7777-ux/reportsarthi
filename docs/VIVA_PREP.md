@@ -304,8 +304,12 @@ with names blacked out) and record accuracy. Real numbers make the results chapt
 - **Why Gemini?** It has a free tier (good for a student project), reads PDFs and photos
   directly, and supports structured JSON output with a schema. All AI code is in `ai.py`,
   so switching provider changes one file only.
-- **What if a model is overloaded?** `MODELS` is a list: on HTTP 503 (busy) or 429 (free
-  limit reached) the request is retried on the next model, so the user rarely sees an error.
+- **What if a model is overloaded?** `MODELS` is a list tried in order. A busy model (503) gets
+  one retry after 2 seconds; a model that is still busy, too slow (90 s timeout), over its free
+  limit (429) or retired (404) is skipped for the next one. Only a genuine bad request (400)
+  tells the user to try a different file. Every failure is logged in the server window with
+  its real code, which is how a misleading "couldn't open this file" message was traced to
+  an overloaded model plus a retired backup model.
 - **Privacy on the free tier:** Google may use free-tier content to improve its products,
   so demos use sample or anonymised reports. A real deployment needs a paid tier.
 
@@ -325,7 +329,7 @@ with names blacked out) and record accuracy. Real numbers make the results chapt
 
 21. **How did you test without spending money on the API?**
     pytest with Flask's test client, a fresh temporary database per test, and
-    `monkeypatch` replacing the AI functions with fakes. 61 tests cover login, account settings, PDF downloads, the review and correction flow, share links (expiry, revoking, access), the database migration, access
+    `monkeypatch` replacing the AI functions with fakes. 66 tests cover login, AI retries and fallback, account settings, PDF downloads, the review and correction flow, share links (expiry, revoking, access), the database migration, access
     control, file validation, extraction cleaning, the status logic, sample data, trends,
     Q&A and deletion.
 
