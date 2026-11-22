@@ -258,8 +258,8 @@ with names blacked out) and record accuracy. Real numbers make the results chapt
 
 - **Design system:** colours, fonts, radius and shadows are CSS variables, so the theme
   (`static/premium.css`, loaded last) and dark mode only change variables.
-- **Typography:** Inter for text (designed for screens, clear numbers) and Instrument Serif
-  for large headings, which gives a calm, editorial, trustworthy feel suited to health.
+- **Typography:** Lato for all text and headings: a warm, professional sans-serif widely used
+  by hospital websites, easy to read at small sizes. Hindi falls back to Noto Sans Devanagari.
   Numbers use `font-variant-numeric: tabular-nums` so values line up.
 - **Icons:** `templates/_icons.html` is a small set of SVG line icons used through a Jinja
   macro, `{{ icon('download') }}`. SVG icons scale cleanly, follow the text colour

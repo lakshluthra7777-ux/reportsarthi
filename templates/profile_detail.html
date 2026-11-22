@@ -72,7 +72,7 @@
     var dark = theme ? theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
     Chart.defaults.color = dark ? "#94a3b8" : "#64748b";
     Chart.defaults.borderColor = dark ? "#23413d" : "#e2e8f0";
-    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.family = "'Lato', sans-serif";
 
     trends.forEach(function (t, index) {
         var datasets = [{

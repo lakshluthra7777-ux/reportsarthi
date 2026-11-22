@@ -56,7 +56,7 @@
 
 body {
     margin: 0;
-    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    font-family: "Lato", "Segoe UI", Arial, sans-serif;
     color: var(--text);
     background: var(--background);
     /* Two soft coloured glows at the top of every page. */
