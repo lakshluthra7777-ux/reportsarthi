@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Link no longer available - ReportSaathi{% endblock %}
+
+{% block head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <p class="error-code gradient-text">⏳</p>
+    <h2>This share link has {{ reason }}.</h2>
+    <p class="muted">For privacy, shared reports only stay open for a limited time.
+        Please ask the patient to send a new link.</p>
+</div>
+{% endblock %}

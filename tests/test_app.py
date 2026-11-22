@@ -211,6 +211,85 @@ def test_fix_value_in_saved_report(client, monkeypatch):
     assert b"AI accuracy 50%" in page.data
 
 
+# ---------- Sharing with a doctor ----------
+
+def share_token(client, report_id=1, hours="24"):
+    """Create a share link and return its token (read from the database)."""
+    client.post(f"/reports/{report_id}/share", data={"hours": hours})
+    import sqlite3
+    db = sqlite3.connect(reportsaathi.app.config["DATABASE"])
+    return db.execute("SELECT token FROM share_links ORDER BY id DESC LIMIT 1").fetchone()[0]
+
+
+def test_share_link_opens_without_login(client, monkeypatch):
+    monkeypatch.setattr(reports, "read_report", fake_read_report)
+    register_and_login(client)
+    upload_and_save(client)
+    page = client.get("/reports/1")
+    assert b"Share with your doctor" in page.data
+
+    token = share_token(client)
+    assert len(token) >= 30                      # long random token
+    assert token.encode() in client.get("/reports/1").data  # link + QR shown to the patient
+
+    client.get("/logout")                        # the doctor is not logged in
+    shared = client.get(f"/s/{token}")
+    assert shared.status_code == 200
+    assert b"Shared report, read-only" in shared.data
+    assert b"10.5" in shared.data and b"City Diagnostics" in shared.data
+    assert shared.headers["Referrer-Policy"] == "no-referrer"
+    assert b"Ask about this report" not in shared.data   # no patient-only features
+
+
+def test_share_link_counts_views(client, monkeypatch):
+    monkeypatch.setattr(reports, "read_report", fake_read_report)
+    register_and_login(client)
+    upload_and_save(client)
+    token = share_token(client)
+    client.get(f"/s/{token}")
+    client.get(f"/s/{token}")
+    assert b"Opened 2 times" in client.get("/reports/1").data
+
+
+def test_revoked_share_link_stops_working(client, monkeypatch):
+    monkeypatch.setattr(reports, "read_report", fake_read_report)
+    register_and_login(client)
+    upload_and_save(client)
+    token = share_token(client)
+    client.post("/reports/1/share/1/revoke")
+    response = client.get(f"/s/{token}")
+    assert response.status_code == 410
+    assert b"turned off by the patient" in response.data
+
+
+def test_expired_share_link_stops_working(client, monkeypatch):
+    monkeypatch.setattr(reports, "read_report", fake_read_report)
+    register_and_login(client)
+    upload_and_save(client)
+    token = share_token(client)
+    import sqlite3
+    db = sqlite3.connect(reportsaathi.app.config["DATABASE"])
+    db.execute("UPDATE share_links SET expires_at = datetime('now', '-1 minute')")
+    db.commit()
+    response = client.get(f"/s/{token}")
+    assert response.status_code == 410
+    assert b"expired" in response.data
+    assert token.encode() not in client.get("/reports/1").data  # no longer listed as active
+
+
+def test_unknown_share_token_is_404(client):
+    assert client.get("/s/not-a-real-token").status_code == 404
+
+
+def test_cannot_share_someone_elses_report(client, monkeypatch):
+    monkeypatch.setattr(reports, "read_report", fake_read_report)
+    register_and_login(client, "asha")
+    upload_and_save(client)
+    client.get("/logout")
+    register_and_login(client, "ravi")
+    assert client.post("/reports/1/share", data={"hours": "24"}).status_code == 404
+
+
 def test_old_database_is_migrated(tmp_path):
     """A results table from the first version (no 'corrected' column) gets the column added."""
     import sqlite3

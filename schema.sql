@@ -77,5 +77,19 @@ CREATE TABLE IF NOT EXISTS questions (
     FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE
 );
 
+-- Secret links that let a doctor view one report without logging in.
+-- The token is long and random, so it can't be guessed; the link stops working
+-- when it expires or when the patient revokes it.
+CREATE TABLE IF NOT EXISTS share_links (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id  INTEGER NOT NULL,
+    token      TEXT    NOT NULL UNIQUE,
+    expires_at TEXT    NOT NULL,           -- UTC, 'YYYY-MM-DD HH:MM:SS'
+    revoked    INTEGER NOT NULL DEFAULT 0,
+    views      INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE
+);
+
 CREATE INDEX IF NOT EXISTS idx_results_trend ON results (canonical_name);
 CREATE INDEX IF NOT EXISTS idx_reports_profile ON reports (profile_id, report_date);

@@ -67,6 +67,54 @@ def save_report(db, profile_id, file_name, language, data):
     return report_id
 
 
+def report_details(db, report):
+    """Everything the report page shows about one report's results.
+
+    Used by both the patient's page and the doctor's shared page, so they always agree.
+    """
+    results = db.execute(
+        "SELECT * FROM results WHERE report_id = ? ORDER BY category, id", (report["id"],)
+    ).fetchall()
+
+    # Group results by category (Blood Count, Lipid Profile...) for the page.
+    categories = {}
+    for result in results:
+        categories.setdefault(result["category"], []).append(result)
+
+    counts = {"normal": 0, "flagged": 0, "critical": 0, "corrected": 0}
+    for result in results:
+        counts["corrected"] += result["corrected"]
+        if result["status"] in ("low", "high", "abnormal"):
+            counts["flagged"] += 1
+        elif result["status"] == "normal":
+            counts["normal"] += 1
+        counts["critical"] += result["critical"]
+
+    # The same test in this person's previous report, to show "was X" next to each value.
+    previous = {}
+    for row in db.execute(
+        "SELECT x.canonical_name, x.value_text, r.report_date FROM results x"
+        " JOIN reports r ON r.id = x.report_id"
+        " WHERE r.profile_id = ? AND (r.report_date < ? OR (r.report_date = ? AND r.id < ?))"
+        " ORDER BY r.report_date, r.id",
+        (report["profile_id"], report["report_date"], report["report_date"], report["id"]),
+    ):
+        previous[row["canonical_name"]] = row  # later rows overwrite earlier: keeps the latest
+
+    # Health score: the percentage of checked tests that are in the normal range.
+    # Tests with no range ("unknown") are left out, so they neither help nor hurt.
+    checked = counts["normal"] + counts["flagged"]
+    score = round(counts["normal"] * 100 / checked) if checked else None
+
+    # Per-category summary for the chips under the score: (name, flagged count).
+    category_flags = [
+        (name, sum(1 for r in rows if r["status"] in ("low", "high", "abnormal")))
+        for name, rows in categories.items()
+    ]
+    return {"categories": categories, "counts": counts, "previous": previous,
+            "total": len(results), "score": score, "category_flags": category_flags}
+
+
 def get_own_pending(pending_id):
     """Fetch a report waiting for review that belongs to the logged-in user, or 404."""
     pending = get_db().execute(

@@ -1,0 +1,19 @@
+{#
+  Reusable template pieces ("macros"), imported by the report page and the doctor's shared page.
+
+  range_bar: where to draw the dot on the range bar. The green middle zone (20% to 80% of the
+  bar) is the normal range; values outside it land in the blue (low) or red (high) ends.
+  A range like "< 200" has no lower limit, so 0 is used.
+#}
+{% macro range_bar(r) %}
+    {% set low = r['ref_low'] if r['ref_low'] is not none else (0 if r['ref_high'] is not none else none) %}
+    {% set high = r['ref_high'] %}
+    {% if r['value_num'] is not none and low is not none and high is not none and high > low %}
+        {% set percent = 20 + (r['value_num'] - low) / (high - low) * 60 %}
+        {% set percent = [[percent, 3]|max, 97]|min %}
+        <div class="range-bar" title="Normal range {{ r['ref_text'] }}">
+            <span class="range-dot dot-{{ r['status'] if r['status'] in ('low', 'high') else 'normal' }}"
+                  style="left: {{ percent|round(1) }}%"></span>
+        </div>
+    {% endif %}
+{% endmacro %}

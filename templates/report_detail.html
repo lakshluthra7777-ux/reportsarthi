@@ -6,23 +6,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='review.css') }}">
 {% endblock %}
 
-{#
-  Where to draw the dot on the range bar. The green middle zone (20% to 80% of the bar)
-  is the normal range; values outside it land in the blue (low) or red (high) ends.
-  A range like "< 200" has no lower limit, so 0 is used.
-#}
-{% macro range_bar(r) %}
-    {% set low = r['ref_low'] if r['ref_low'] is not none else (0 if r['ref_high'] is not none else none) %}
-    {% set high = r['ref_high'] %}
-    {% if r['value_num'] is not none and low is not none and high is not none and high > low %}
-        {% set percent = 20 + (r['value_num'] - low) / (high - low) * 60 %}
-        {% set percent = [[percent, 3]|max, 97]|min %}
-        <div class="range-bar" title="Normal range {{ r['ref_text'] }}">
-            <span class="range-dot dot-{{ r['status'] if r['status'] in ('low', 'high') else 'normal' }}"
-                  style="left: {{ percent|round(1) }}%"></span>
-        </div>
-    {% endif %}
-{% endmacro %}
+{% from "_macros.html" import range_bar %}
 
 {% block content %}
 <a class="back-link" href="{{ url_for('profiles.view_profile', profile_id=report['profile_id']) }}">← {{ report['profile_name'] }}'s reports</a>
@@ -155,6 +139,57 @@
     </div>
 </div>
 
+<section class="card share-card reveal" id="share">
+    <div class="page-header">
+        <div>
+            <h3 style="margin: 0;">📤 Share with your doctor</h3>
+            <p class="muted small" style="margin: 4px 0 0;">
+                Make a secret link (and QR code) that opens a read-only copy of this report only.
+                No login needed. It stops working when it expires or when you turn it off.
+            </p>
+        </div>
+        <form method="post" action="{{ url_for('reports.create_share', report_id=report['id']) }}" class="share-form">
+            <select name="hours" aria-label="How long the link works">
+                {% for hours, label in share_choices.items() %}<option value="{{ hours }}">Valid {{ label }}</option>{% endfor %}
+            </select>
+            <button type="submit">🔗 Create link</button>
+        </form>
+    </div>
+
+    {% for link in links %}
+        {% set url = base_url ~ url_for('shared.view', token=link['token']) %}
+        <div class="share-link">
+            <div class="qr" data-qr="{{ url }}" aria-label="QR code for the share link"></div>
+            <div class="share-info">
+                <div class="copy-row">
+                    <input type="text" value="{{ url }}" readonly aria-label="Share link" id="link-{{ link['id'] }}">
+                    <button type="button" class="button-light" data-copy="#link-{{ link['id'] }}">📋 Copy</button>
+                </div>
+                <p class="muted small">
+                    ⏳ Expires {{ link['expires_at'] }} UTC · 👁️ Opened {{ link['views'] }} time{{ '' if link['views'] == 1 else 's' }}
+                </p>
+                <div class="actions" style="margin: 0;">
+                    <a class="button button-light" href="{{ url }}" target="_blank" rel="noopener">👀 Preview</a>
+                    <form method="post" action="{{ url_for('reports.revoke_share', report_id=report['id'], link_id=link['id']) }}"
+                          onsubmit="return confirm('Turn off this link? Anyone who has it will no longer see the report.');">
+                        <button type="submit" class="button-danger">⛔ Turn off</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <p class="muted small" style="margin-bottom: 0;">No active links. Create one before your appointment.</p>
+    {% endfor %}
+
+    {% if links and base_url.startswith(('http://127.', 'http://localhost')) %}
+        <p class="small share-warning">
+            ⚠️ This link uses <code>{{ base_url }}</code>, which only opens on this computer. For a phone
+            on the same Wi-Fi, set <code>PUBLIC_URL</code> in <code>.env</code> (see README); once the
+            app is online, links work anywhere.
+        </p>
+    {% endif %}
+</section>
+
 <div class="disclaimer">
     ⚠️ ReportSaathi explains reports in simple words using AI and can make mistakes. It does not
     diagnose illness or suggest medicines. Always check the original report and talk to a
@@ -165,4 +200,31 @@
       onsubmit="return confirm('Delete this report? This cannot be undone.');" style="margin-top: 20px;">
     <button type="submit" class="button-danger">🗑️ Delete this report</button>
 </form>
+{% endblock %}
+
+{% block scripts %}
+{% if links %}
+{# qrcode.js draws a QR code from a piece of text (here, the share link) in the browser. #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+    document.querySelectorAll("[data-qr]").forEach(function (box) {
+        new QRCode(box, { text: box.dataset.qr, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });
+    });
+</script>
+{% endif %}
+<script>
+    // Copy a link to the clipboard and show "Copied!" for a moment.
+    document.querySelectorAll("[data-copy]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            var input = document.querySelector(button.dataset.copy);
+            input.select();
+            (navigator.clipboard ? navigator.clipboard.writeText(input.value) : Promise.reject())
+                .catch(function () { document.execCommand("copy"); })
+                .finally(function () {
+                    button.textContent = "✅ Copied!";
+                    setTimeout(function () { button.textContent = "📋 Copy"; }, 1800);
+                });
+        });
+    });
+</script>
 {% endblock %}

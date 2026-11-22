@@ -1,6 +1,8 @@
 # Lab reports: upload (PDF or photo), view the explained results, ask questions, delete.
 
 import json
+import os
+import secrets
 from datetime import date
 
 from flask import Blueprint, flash, g, redirect, render_template, request, url_for
@@ -9,7 +11,7 @@ from ai import LANGUAGES, AIError, ask_about_report, read_report
 from database import get_db
 from helpers import (
     apply_correction, format_number, get_own_pending, get_own_profile, get_own_report,
-    login_required, save_report,
+    login_required, report_details, save_report,
 )
 
 bp = Blueprint("reports", __name__, url_prefix="/reports")
@@ -180,54 +182,57 @@ def edit_report(report_id):
 def view_report(report_id):
     report = get_own_report(report_id)
     db = get_db()
-    results = db.execute(
-        "SELECT * FROM results WHERE report_id = ? ORDER BY category, id", (report_id,)
-    ).fetchall()
-
-    # Group results by category (Blood Count, Lipid Profile...) for the page.
-    categories = {}
-    for result in results:
-        categories.setdefault(result["category"], []).append(result)
-
-    counts = {"normal": 0, "flagged": 0, "critical": 0, "corrected": 0}
-    for result in results:
-        counts["corrected"] += result["corrected"]
-        if result["status"] in ("low", "high", "abnormal"):
-            counts["flagged"] += 1
-        elif result["status"] == "normal":
-            counts["normal"] += 1
-        counts["critical"] += result["critical"]
-
-    # The same test in this person's previous report, to show "was X" next to each value.
-    previous = {}
-    for row in db.execute(
-        "SELECT x.canonical_name, x.value_text, r.report_date FROM results x"
-        " JOIN reports r ON r.id = x.report_id"
-        " WHERE r.profile_id = ? AND (r.report_date < ? OR (r.report_date = ? AND r.id < ?))"
-        " ORDER BY r.report_date, r.id",
-        (report["profile_id"], report["report_date"], report["report_date"], report_id),
-    ):
-        previous[row["canonical_name"]] = row  # later rows overwrite earlier: keeps the latest
-
+    details = report_details(db, report)  # results, counts, score... (shared with the doctor view)
     questions = db.execute(
         "SELECT * FROM questions WHERE report_id = ? ORDER BY id", (report_id,)
     ).fetchall()
-
-    # Health score: the percentage of checked tests that are in the normal range.
-    # Tests with no range ("unknown") are left out, so they neither help nor hurt.
-    checked = counts["normal"] + counts["flagged"]
-    score = round(counts["normal"] * 100 / checked) if checked else None
-
-    # Per-category summary for the chips under the score: (name, flagged count).
-    category_flags = [
-        (name, sum(1 for r in rows if r["status"] in ("low", "high", "abnormal")))
-        for name, rows in categories.items()
-    ]
+    # Share links that still work, newest first.
+    links = db.execute(
+        "SELECT * FROM share_links WHERE report_id = ? AND revoked = 0"
+        " AND expires_at > datetime('now') ORDER BY id DESC",
+        (report_id,),
+    ).fetchall()
+    base_url = os.environ.get("PUBLIC_URL", "").rstrip("/") or request.host_url.rstrip("/")
     return render_template(
-        "report_detail.html", report=report, categories=categories, counts=counts,
-        doctor_questions=json.loads(report["doctor_questions"]), previous=previous,
-        questions=questions, total=len(results), score=score, category_flags=category_flags,
+        "report_detail.html", report=report, **details,
+        doctor_questions=json.loads(report["doctor_questions"]), questions=questions,
+        links=links, base_url=base_url, share_choices=SHARE_HOURS,
     )
+
+
+# ---------- Sharing with a doctor ----------
+
+SHARE_HOURS = {24: "24 hours", 72: "3 days", 168: "7 days"}
+
+
+@bp.route("/<int:report_id>/share", methods=["POST"])
+@login_required
+def create_share(report_id):
+    """Make a secret read-only link to this report that expires after the chosen time."""
+    get_own_report(report_id)  # 404 if it isn't this user's report
+    hours = request.form.get("hours", type=int)
+    if hours not in SHARE_HOURS:
+        hours = 24
+    token = secrets.token_urlsafe(24)  # 32 random characters: impossible to guess
+    db = get_db()
+    db.execute(
+        "INSERT INTO share_links (report_id, token, expires_at) VALUES (?, ?, datetime('now', ?))",
+        (report_id, token, f"+{hours} hours"),
+    )
+    db.commit()
+    flash(f"Share link created. It works for {SHARE_HOURS[hours]}.", "success")
+    return redirect(url_for("reports.view_report", report_id=report_id) + "#share")
+
+
+@bp.route("/<int:report_id>/share/<int:link_id>/revoke", methods=["POST"])
+@login_required
+def revoke_share(report_id, link_id):
+    get_own_report(report_id)
+    db = get_db()
+    db.execute("UPDATE share_links SET revoked = 1 WHERE id = ? AND report_id = ?", (link_id, report_id))
+    db.commit()
+    flash("Link turned off. It no longer opens the report.", "success")
+    return redirect(url_for("reports.view_report", report_id=report_id) + "#share")
 
 
 @bp.route("/<int:report_id>/ask", methods=["POST"])

@@ -3,7 +3,8 @@
 #   auth.py       register / login / logout
 #   dashboard.py  family overview, sample data
 #   profiles.py   family members, report history, trend charts
-#   reports.py    upload and read reports with AI, results page, questions
+#   reports.py    upload and read reports with AI, results page, questions, share links
+#   shared.py     the doctor's read-only view, opened from a share link (no login)
 
 import os
 
@@ -11,7 +12,7 @@ from dotenv import load_dotenv
 from flask import Flask, g, redirect, render_template, url_for
 
 from database import close_db, init_db
-from routes import auth, dashboard, profiles, reports
+from routes import auth, dashboard, profiles, reports, shared
 
 load_dotenv()  # reads .env into environment variables
 
@@ -24,7 +25,7 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True  # JavaScript can't read the login 
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # cookie isn't sent on most cross-site requests
 app.teardown_appcontext(close_db)  # close the DB connection after every request
 
-for module in (auth, dashboard, profiles, reports):
+for module in (auth, dashboard, profiles, reports, shared):
     app.register_blueprint(module.bp)
 
 
@@ -60,5 +61,8 @@ def server_error(error):
 if __name__ == "__main__":
     with app.app_context():
         init_db()  # creates reportsaathi.db and any missing tables
-    # debug=True restarts the server when code changes. Turn it off in production.
-    app.run(debug=True)
+    # HOST=0.0.0.0 in .env lets phones on the same Wi-Fi open the app (e.g. to scan a share QR).
+    host = os.environ.get("HOST", "127.0.0.1")
+    # Debug mode (auto-reload + error pages with a code console) is only safe on this computer:
+    # anyone on the network could use the debugger console to run code, so it's off otherwise.
+    app.run(host=host, debug=host in ("127.0.0.1", "localhost"))

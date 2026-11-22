@@ -22,6 +22,7 @@ member's results over time with charts.
 | Check before saving | **Human-in-the-loop review screen**: the user compares the AI's values with the paper report, fixes or removes rows (status updates live), then saves |
 | Fix a value later | Any saved report can be corrected; corrected values are marked ✏️ |
 | AI accuracy | Each report shows how many values the user had to correct, e.g. "AI accuracy 95% · 1 of 20 corrected" |
+| Share with doctor | A secret link + **QR code** opens a read-only, printable copy of one report without login; it expires (24 h / 3 days / 7 days), can be turned off, and counts views |
 | Plain-language explanations | Summary, per-test explanation and doctor questions in **English, Hindi or Hinglish** |
 | Urgent alerts | Values far outside the range get an URGENT badge and a red banner |
 | Family profiles | One account manages Self, Mother, Father...; age and sex are sent to the AI for context |
@@ -31,7 +32,7 @@ member's results over time with charts.
 | Privacy by design | The uploaded file is never stored; only the extracted values are kept |
 | Security | Password hashing, parameterised SQL, per-user access checks, file-type check by magic bytes, upload size limits, HttpOnly cookies |
 | Demo mode | "Load sample data" adds a family with 6 reports, no API key needed |
-| Testing | 42 automated pytest tests; the AI is replaced with fakes |
+| Testing | 48 automated pytest tests; the AI is replaced with fakes |
 
 ## Tech stack
 
@@ -61,7 +62,7 @@ reportsaathi/
 │   └── reports.py          # upload, results page, ask a question, delete
 ├── templates/          # Jinja2 pages (all extend base.html)
 ├── static/             # style.css (base design), app.css (results, charts)
-├── tests/test_app.py   # 42 tests
+├── tests/test_app.py   # 48 tests
 └── docs/VIVA_PREP.md   # Architecture, design decisions, report outline, viva Q&A
 ```
 
@@ -89,6 +90,18 @@ https://aistudio.google.com (needed only to read new reports).
 
 5. Open http://127.0.0.1:5000, register, then either upload a report or click
    **Load sample data**.
+
+### Scanning share QR codes from a phone
+
+Share links normally point to `127.0.0.1`, which only works on the same computer. To open
+them from a phone on the same Wi-Fi:
+
+1. Run `ipconfig` and note your PC's **IPv4 Address** (e.g. `192.168.1.5`).
+2. Add to `.env`: `HOST=0.0.0.0` and `PUBLIC_URL=http://192.168.1.5:5000`.
+3. Restart the app and allow Python through Windows Firewall if asked (private networks only).
+
+Debug mode switches off automatically when `HOST` isn't `127.0.0.1`, because the debugger
+would let anyone on the network run code. Use this only on a trusted home network.
 
 ## Running the tests
 

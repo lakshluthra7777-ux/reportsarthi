@@ -137,6 +137,81 @@ tr.removing td {
     font-weight: 600;
 }
 
+/* ---------- Share with doctor ---------- */
+.doctor-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-left: 4px solid var(--primary);
+}
+
+.share-card {
+    margin-top: 20px;
+}
+
+.share-form {
+    display: flex;
+    gap: 8px;
+}
+
+.share-form select {
+    width: auto;
+    margin: 0;
+}
+
+.share-link {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+}
+
+/* QR codes need a white background and dark squares to scan reliably, even in dark mode. */
+.qr {
+    flex-shrink: 0;
+    padding: 10px;
+    border-radius: 12px;
+    background: white;
+}
+
+.qr img,
+.qr canvas {
+    display: block;
+}
+
+.share-info {
+    flex: 1;
+    min-width: 240px;
+}
+
+.copy-row {
+    display: flex;
+    gap: 8px;
+}
+
+.copy-row input {
+    margin: 0;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+.copy-row button {
+    flex-shrink: 0;
+}
+
+.share-warning {
+    margin: 14px 0 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--warn) 12%, transparent);
+}
+
 .corrected-tag {
     display: inline-block;
     margin-left: 6px;

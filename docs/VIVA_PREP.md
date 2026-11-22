@@ -234,6 +234,26 @@ with names blacked out) and record accuracy. Real numbers make the results chapt
   `PRAGMA table_info(results)` and runs `ALTER TABLE ... ADD COLUMN corrected` if it's missing,
   a small schema migration, because `CREATE TABLE IF NOT EXISTS` never changes existing tables.
 
+### Sharing with a doctor
+
+- **How does sharing work?** The patient clicks "Create link". The server makes a random token
+  with `secrets.token_urlsafe(24)` (32 characters, about 192 bits of randomness, so it can't be
+  guessed), stores it in `share_links` with an expiry time, and shows the link and a QR code
+  (drawn in the browser by qrcode.js). Opening `/s/<token>` shows a read-only copy of that
+  one report, with no login.
+- **Why is that safe without a password?** The link is a *capability*: only someone who has it
+  can open it, it shows one report only, it expires (24 h / 3 days / 7 days, checked on the
+  server), the patient can turn it off at any time, and every open is counted so misuse is
+  visible. Unknown tokens get 404 and expired or revoked ones get 410 Gone, without revealing
+  anything about the account.
+- **Other protections:** `Referrer-Policy: no-referrer` (the secret URL isn't sent to other
+  sites), `noindex` (search engines won't list it), `Cache-Control: no-store`. The doctor view
+  hides patient-only features (Q&A, editing, other reports).
+- **Why use `secrets` and not `random`?** `random` is predictable (made for simulations);
+  `secrets` uses the operating system's cryptographically secure generator.
+- **Why does the patient's page and the doctor's page always match?** Both use the same
+  `report_details()` helper and the same `range_bar` macro (`templates/_macros.html`).
+
 ### Choice of AI
 
 - **Why Gemini?** It has a free tier (good for a student project), reads PDFs and photos
@@ -260,7 +280,7 @@ with names blacked out) and record accuracy. Real numbers make the results chapt
 
 21. **How did you test without spending money on the API?**
     pytest with Flask's test client, a fresh temporary database per test, and
-    `monkeypatch` replacing the AI functions with fakes. 42 tests cover login, the review and correction flow, the database migration, access
+    `monkeypatch` replacing the AI functions with fakes. 48 tests cover login, the review and correction flow, share links (expiry, revoking, access), the database migration, access
     control, file validation, extraction cleaning, the status logic, sample data, trends,
     Q&A and deletion.
 

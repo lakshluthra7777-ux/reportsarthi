@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% from "_macros.html" import range_bar %}
+
+{# The doctor's read-only view. Opened from a share link, without logging in.
+   It shows ONE report and has no links to the rest of the patient's account. #}
+{% block title %}Shared lab report - ReportSaathi{% endblock %}
+
+{% block head %}
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{{ url_for('static', filename='review.css') }}">
+<style>
+    /* Printing: plain white page, no background effects, navigation or buttons. */
+    @media print {
+        .aurora, .navbar, footer, .no-print { display: none !important; }
+        body { background: white; color: black; }
+        .card { box-shadow: none; backdrop-filter: none; background: white; border-color: #ccc; }
+        .result { break-inside: avoid; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card doctor-banner">
+    <span>🩺 <strong>Shared report, read-only.</strong> Shared by the patient through ReportSaathi.
+        Link valid until {{ link['expires_at'] }} UTC.</span>
+    <button type="button" class="button-light no-print" onclick="window.print()">🖨️ Print</button>
+</div>
+
+<div class="review-head" style="margin-top: 20px;">
+    <div>
+        <span class="pill">🧪 {{ report['lab_name'] }} · {{ report['report_date'] }}</span>
+        <h1>{{ report['profile_name'] }}</h1>
+        <span class="muted">
+            {{ report['sex'] or 'Sex not given' }}{% if age %} · {{ age }} years{% endif %}
+            · {{ total }} tests · {{ counts['flagged'] }} outside range
+        </span>
+    </div>
+    {% if score is not none %}
+        <span class="accuracy">{{ score }}% of tests in range</span>
+    {% endif %}
+</div>
+
+{% if counts['critical'] %}
+    <div class="critical-banner">🚨 {{ counts['critical'] }} result{{ '' if counts['critical'] == 1 else 's' }} flagged as far outside the reference range.</div>
+{% endif %}
+
+{% for category, results in categories.items() %}
+    <section class="card category">
+        <h3>{{ category }}</h3>
+        {% for r in results %}
+            <div class="result {{ 'flagged' if r['status'] in ('low', 'high', 'abnormal') }}">
+                <div class="result-name">
+                    {{ r['name'] }}
+                    {% if r['corrected'] %}<span class="corrected-tag" title="Value typed in by the patient, not read by AI">✏️ entered by patient</span>{% endif %}
+                </div>
+                <div>
+                    <span class="result-value value-{{ r['status'] }}">{{ r['value_text'] }}</span>
+                    <span class="small muted">{{ r['unit'] }}</span>
+                    {% set before = previous.get(r['canonical_name']) %}
+                    {% if before %}<span class="previous">was {{ before['value_text'] }} on {{ before['report_date'] }}</span>{% endif %}
+                </div>
+                <div>
+                    {{ range_bar(r) }}
+                    <span class="range-text">Ref: {{ r['ref_text'] or 'not given' }}</span>
+                </div>
+                <div>
+                    {% if r['critical'] %}<span class="badge badge-critical">CRITICAL</span>
+                    {% else %}<span class="badge badge-{{ r['status'] }}">{{ r['status']|upper }}</span>{% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </section>
+{% endfor %}
+
+<div class="disclaimer">
+    Values were extracted from the patient's uploaded report by AI and checked by the patient.
+    Please verify important values against the original lab report.
+</div>
+{% endblock %}
