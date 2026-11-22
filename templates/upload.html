@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 
 {% block title %}Upload report - ReportSaathi{% endblock %}
 
@@ -8,7 +9,7 @@
 {# enctype="multipart/form-data" is required for the browser to send a file. #}
 <form method="post" enctype="multipart/form-data" class="card upload-form"
       data-loading="Reading your report..." data-scan>
-    <h1 style="margin-top: 0;">📤 Upload a lab report</h1>
+    <h1 style="margin-top: 0;">{{ icon('upload') }} Upload a lab report</h1>
     <p class="muted">A PDF from the lab, a scanned copy or a clear phone photo all work.</p>
 
     <div class="form-row" style="grid-template-columns: 1fr 1fr;">
@@ -31,7 +32,7 @@
 
     <label for="report">Report file</label>
     <label class="dropzone" for="report">
-        <span class="emoji">📄📷</span>
+        <span class="emoji">{{ icon('file') }} </span>
         <span id="file-name">Click to choose a PDF or photo</span>
         <span class="small">PDF up to 20 MB · JPG, PNG or WEBP up to 5 MB</span>
         <input id="report" name="report" type="file" required
@@ -39,25 +40,37 @@
     </label>
 
     <div class="privacy-note">
-        🔒 <span>Your file is sent securely to the AI to be read, then thrown away. Only the test
+        {{ icon('lock') }} <span>Your file is sent securely to the AI to be read, then thrown away. Only the test
             values and explanations are saved, never the file itself.</span>
     </div>
 
     <div class="actions">
-        <button type="submit" class="button-large">🔍 Read my report</button>
+        <button type="submit" class="button-large">{{ icon('search') }} Read my report</button>
     </div>
 </form>
 
-{# Shown by fx.js while the AI reads the report: a document with a moving scan line. #}
+{# Shown by fx.js while the AI reads the report: buffering emoji, steps, timer and health facts. #}
 <div class="scan-overlay" id="scan-overlay" role="status" aria-live="polite">
     <div class="card scan-box">
-        <div class="scan-doc" aria-hidden="true">
-            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-            <span class="scan-line"></span>
+        <div class="loader" aria-hidden="true">
+            <span class="loader-ring"></span>
+            <span class="loader-emoji pop">🧪</span>
         </div>
-        <div class="scan-step">📄 Opening your report...</div>
+        <div class="scan-label">Reading your report</div>
+        <div class="scan-step">Opening your report</div>
         <div class="scan-progress"><div></div></div>
-        <p class="muted small">AI is reading every value. This usually takes 20–40 seconds.</p>
+        <div class="scan-meta">
+            <span>{{ icon('lock') }} Your file is never stored</span>
+            <span class="scan-timer">0:00</span>
+        </div>
+
+        <div class="fact">
+            <span class="fact-title">Did you know?</span>
+            <div class="fact-body">
+                <span class="fact-emoji">💡</span>
+                <p class="fact-text">Health facts appear here while you wait.</p>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

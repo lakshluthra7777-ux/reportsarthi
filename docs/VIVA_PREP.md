@@ -254,6 +254,22 @@ with names blacked out) and record accuracy. Real numbers make the results chapt
 - **Why does the patient's page and the doctor's page always match?** Both use the same
   `report_details()` helper and the same `range_bar` macro (`templates/_macros.html`).
 
+### User interface design
+
+- **Design system:** colours, fonts, radius and shadows are CSS variables, so the theme
+  (`static/premium.css`, loaded last) and dark mode only change variables.
+- **Typography:** Inter for text (designed for screens, clear numbers) and Instrument Serif
+  for large headings, which gives a calm, editorial, trustworthy feel suited to health.
+  Numbers use `font-variant-numeric: tabular-nums` so values line up.
+- **Icons:** `templates/_icons.html` is a small set of SVG line icons used through a Jinja
+  macro, `{{ icon('download') }}`. SVG icons scale cleanly, follow the text colour
+  (`currentColor`) and look the same on every device, unlike emojis.
+- **Waiting screen:** reading a report takes 20–40 seconds, so the upload page shows progress
+  steps, a live timer, a progress bar that eases towards 95%, a changing emoji, and short health
+  facts. This reduces *perceived* waiting time and keeps the user informed (a known UX principle).
+- **Accessibility:** focus outlines on buttons and links, labels on every input, colour plus
+  text for status (LOW/HIGH, not colour alone), and reduced motion when the OS asks for it.
+
 ### Account features
 
 - **Why ask for the current password when changing it?** So someone using an unlocked

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% from "_macros.html" import range_bar %}
 
 {# The doctor's read-only view. Opened from a share link, without logging in.
@@ -21,17 +22,17 @@
 
 {% block content %}
 <div class="card doctor-banner">
-    <span>🩺 <strong>Shared report, read-only.</strong> Shared by the patient through ReportSaathi.
+    <span>{{ icon('stethoscope') }} <strong>Shared report, read-only.</strong> Shared by the patient through ReportSaathi.
         Link valid until {{ link['expires_at'] }} UTC.</span>
     <span class="actions no-print" style="margin: 0;">
-        <button type="button" class="button-light" onclick="window.print()">🖨️ Print</button>
-        <a class="button" href="{{ url_for('shared.pdf', token=link['token']) }}" target="_blank" rel="noopener">⬇️ Download PDF</a>
+        <button type="button" class="button-light" onclick="window.print()">{{ icon('printer') }} Print</button>
+        <a class="button" href="{{ url_for('shared.pdf', token=link['token']) }}" target="_blank" rel="noopener">{{ icon('download') }} Download PDF</a>
     </span>
 </div>
 
 <div class="review-head" style="margin-top: 20px;">
     <div>
-        <span class="pill">🧪 {{ report['lab_name'] }} · {{ report['report_date'] }}</span>
+        <span class="pill">{{ icon('flask') }} {{ report['lab_name'] }} · {{ report['report_date'] }}</span>
         <h1>{{ report['profile_name'] }}</h1>
         <span class="muted">
             {{ report['sex'] or 'Sex not given' }}{% if age %} · {{ age }} years{% endif %}
@@ -44,7 +45,7 @@
 </div>
 
 {% if counts['critical'] %}
-    <div class="critical-banner">🚨 {{ counts['critical'] }} result{{ '' if counts['critical'] == 1 else 's' }} flagged as far outside the reference range.</div>
+    <div class="critical-banner">{{ icon('alert') }} {{ counts['critical'] }} result{{ '' if counts['critical'] == 1 else 's' }} flagged as far outside the reference range.</div>
 {% endif %}
 
 {% for category, results in categories.items() %}
@@ -54,7 +55,7 @@
             <div class="result {{ 'flagged' if r['status'] in ('low', 'high', 'abnormal') }}">
                 <div class="result-name">
                     {{ r['name'] }}
-                    {% if r['corrected'] %}<span class="corrected-tag" title="Value typed in by the patient, not read by AI">✏️ entered by patient</span>{% endif %}
+                    {% if r['corrected'] %}<span class="corrected-tag" title="Value typed in by the patient, not read by AI">{{ icon('pencil') }} entered by patient</span>{% endif %}
                 </div>
                 <div>
                     <span class="result-value value-{{ r['status'] }}">{{ r['value_text'] }}</span>

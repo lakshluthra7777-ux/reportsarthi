@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 
 {% block content %}
 <section class="hero">
     <div>
-        <span class="pill">🩺 AI lab-report explainer</span>
+        <span class="pill">{{ icon('stethoscope') }} AI lab-report explainer</span>
         <h1>Understand your <span class="gradient-text">blood test reports</span> in simple words</h1>
         <p class="muted">
             Upload a PDF or just a phone photo of any lab report. ReportSaathi reads every value,
@@ -26,7 +27,7 @@
             <span class="range-text">Normal: 12.0 – 15.0</span>
         </div>
         <div class="card">
-            <strong>💬 In simple words</strong>
+            <strong>{{ icon('message') }} In simple words</strong>
             <p class="small muted">Haemoglobin carries oxygen in your blood. Slightly low levels
                 can cause tiredness. Ask your doctor whether an iron test is needed.</p>
         </div>
@@ -44,32 +45,32 @@
 <h2 class="section-title">Why ReportSaathi?</h2>
 <section class="features">
     <div class="card feature tilt reveal">
-        <div class="feature-icon">📷</div>
+        <div class="feature-icon">{{ icon('camera') }} </div>
         <h3>Photo or PDF</h3>
         <p class="muted">Works with lab PDFs, scanned reports and phone photos.</p>
     </div>
     <div class="card feature tilt reveal">
-        <div class="feature-icon">🚦</div>
+        <div class="feature-icon">{{ icon('activity') }} </div>
         <h3>Clear flags</h3>
         <p class="muted">Every value colour-coded low, normal or high, with a visual range bar.</p>
     </div>
     <div class="card feature tilt reveal">
-        <div class="feature-icon">🗣️</div>
+        <div class="feature-icon">{{ icon('languages') }} </div>
         <h3>Your language</h3>
         <p class="muted">Simple explanations in English, Hindi or Hinglish.</p>
     </div>
     <div class="card feature tilt reveal">
-        <div class="feature-icon">👨‍👩‍👧</div>
+        <div class="feature-icon">{{ icon('users') }} </div>
         <h3>Whole family</h3>
         <p class="muted">Keep reports for parents and children in one place.</p>
     </div>
     <div class="card feature tilt reveal">
-        <div class="feature-icon">📈</div>
+        <div class="feature-icon">{{ icon('trending') }} </div>
         <h3>Trends</h3>
         <p class="muted">See how sugar, cholesterol or thyroid values change over the years.</p>
     </div>
     <div class="card feature tilt reveal">
-        <div class="feature-icon">👩‍⚕️</div>
+        <div class="feature-icon">{{ icon('stethoscope') }} </div>
         <h3>Doctor-ready</h3>
         <p class="muted">Get a list of good questions to ask at your next appointment.</p>
     </div>

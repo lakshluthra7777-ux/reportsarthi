@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 
 {% block title %}Log in - ReportSaathi{% endblock %}
 
 {% block content %}
 <div class="card auth-box">
-    <div class="feature-icon">👋</div>
+    <div class="feature-icon">{{ icon('user') }}</div>
     <h1>Welcome back</h1>
     <p class="muted">Log in to see your family's reports.</p>
     <form method="post">

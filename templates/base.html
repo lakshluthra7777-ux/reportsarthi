@@ -1,3 +1,4 @@
+{% from "_icons.html" import icon %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,10 +8,11 @@
     <!-- Fonts from Google Fonts (Noto Sans Devanagari shows Hindi text nicely). -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='fx.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='premium.css') }}">
     {% block head %}{% endblock %}
     <script>
         // Apply the saved light/dark choice before the page is drawn (avoids a flash).
@@ -19,20 +21,19 @@
             if (savedTheme) document.documentElement.dataset.theme = savedTheme;
         } catch (e) { /* storage blocked: follow the OS setting */ }
     </script>
-    <style>body { font-family: "Plus Jakarta Sans", "Noto Sans Devanagari", "Segoe UI", Arial, sans-serif; }</style>
 </head>
 <body>
     <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
     {% set section = request.blueprint %}
     <header class="navbar">
         <a class="brand" href="{{ url_for('home') }}">
-            <span class="brand-icon">🩺</span> ReportSaathi
+            <span class="brand-icon">{{ icon('stethoscope') }} </span> ReportSaathi
         </a>
         <nav>
             {% if g.user %}
                 {% set uploading = request.endpoint == 'reports.upload' %}
-                <a class="nav-link {{ 'active' if section in ('dashboard', 'profiles', 'reports') and not uploading }}" href="{{ url_for('dashboard.dashboard') }}">🏠 My Family</a>
-                <a class="nav-link {{ 'active' if uploading }}" href="{{ url_for('reports.upload') }}">📤 Upload Report</a>
+                <a class="nav-link {{ 'active' if section in ('dashboard', 'profiles', 'reports') and not uploading }}" href="{{ url_for('dashboard.dashboard') }}">{{ icon('home') }} My Family</a>
+                <a class="nav-link {{ 'active' if uploading }}" href="{{ url_for('reports.upload') }}">{{ icon('upload') }} Upload Report</a>
                 <a class="nav-link" href="{{ url_for('about') }}">About</a>
                 <a class="nav-link" href="{{ url_for('auth.logout') }}">Log out</a>
                 <a class="avatar" href="{{ url_for('auth.account') }}" title="Account settings ({{ g.user['username'] }})" style="text-decoration: none;">{{ g.user['username'][0] }}</a>
@@ -41,14 +42,14 @@
                 <a class="nav-link" href="{{ url_for('auth.login') }}">Log in</a>
                 <a class="button" href="{{ url_for('auth.register') }}">Sign up free</a>
             {% endif %}
-            <button type="button" id="theme-toggle" class="theme-toggle" title="Switch light / dark theme">🌙</button>
+            <button type="button" id="theme-toggle" class="theme-toggle" title="Switch light / dark theme">{{ icon('moon') }} </button>
         </nav>
     </header>
 
     <main class="container">
         {% for category, message in get_flashed_messages(with_categories=true) %}
             <div class="flash flash-{{ category }}">
-                {{ '✅' if category == 'success' else '⚠️' }} {{ message }}
+                {{ icon('check-circle') if category == 'success' else icon('alert') }} {{ message }}
             </div>
         {% endfor %}
 

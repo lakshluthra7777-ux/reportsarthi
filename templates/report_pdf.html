@@ -1,3 +1,4 @@
+{% from "_icons.html" import icon %}
 <!DOCTYPE html>
 {#
   A clean, white, A4-shaped version of one report. When the page opens, html2pdf.js
@@ -13,7 +14,7 @@
     <title>{{ file_name }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
 
@@ -21,7 +22,7 @@
             margin: 0;
             background: #e5e7eb;
             color: #0f2a2e;
-            font-family: "Plus Jakarta Sans", "Noto Sans Devanagari", Arial, sans-serif;
+            font-family: "Inter", "Noto Sans Devanagari", Arial, sans-serif;
         }
 
         /* Toolbar: only on screen, never in the PDF. */
@@ -167,8 +168,8 @@
     <div class="toolbar">
         <span id="status">⏳ Preparing your PDF…</span>
         <span>
-            <button type="button" id="download-again" hidden>⬇️ Download again</button>
-            <button type="button" onclick="window.print()">🖨️ Print</button>
+            <button type="button" id="download-again" hidden>{{ icon('download') }} Download again</button>
+            <button type="button" onclick="window.print()">{{ icon('printer') }} Print</button>
             {% if not for_doctor %}
                 <a class="light" href="{{ url_for('reports.view_report', report_id=report['id']) }}">← Back to report</a>
             {% endif %}
@@ -178,7 +179,7 @@
     <div id="pdf-doc">
         <div class="doc-head">
             <div>
-                <div class="brand">🩺 ReportSaathi</div>
+                <div class="brand">{{ icon('stethoscope') }} ReportSaathi</div>
                 <p class="doc-title">Lab report summary{% if for_doctor %} · shared with doctor{% endif %}</p>
             </div>
             <div class="generated">Generated {{ now_date }}<br>{{ report['lab_name'] }}</div>
@@ -201,7 +202,7 @@
         </div>
 
         {% if counts['critical'] %}
-            <div class="critical">⚠ {{ counts['critical'] }} result{{ '' if counts['critical'] == 1 else 's' }} far outside the reference range. Please consult a doctor promptly.</div>
+            <div class="critical">{{ icon('alert') }} {{ counts['critical'] }} result{{ '' if counts['critical'] == 1 else 's' }} far outside the reference range. Please consult a doctor promptly.</div>
         {% endif %}
 
         {% if not for_doctor %}
@@ -266,16 +267,16 @@
                 jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
                 pagebreak: { mode: ["css", "legacy"], avoid: ["tr", ".avoid-break"] },
             }).from(document.getElementById("pdf-doc")).save().then(function () {
-                statusText.textContent = "✅ Downloaded " + fileName;
+                statusText.textContent = "Downloaded " + fileName;
                 again.hidden = false;
             }).catch(function () {
-                statusText.textContent = "⚠️ Couldn't build the PDF here. Use Print → Save as PDF instead.";
+                statusText.textContent = "Couldn't build the PDF here. Use Print → Save as PDF instead.";
             });
         }
 
         again.addEventListener("click", makePdf);
         if (typeof html2pdf === "undefined") {
-            statusText.textContent = "⚠️ PDF library didn't load (offline?). Use Print → Save as PDF instead.";
+            statusText.textContent = "PDF library didn't load (offline?). Use Print → Save as PDF instead.";
         } else {
             // Wait for the fonts (including Hindi) so they appear correctly in the PDF.
             document.fonts.ready.then(makePdf);

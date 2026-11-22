@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 
 {% block title %}{{ profile['name'] }} - ReportSaathi{% endblock %}
 
@@ -14,13 +15,13 @@
         </div>
     </div>
     <div class="actions" style="margin: 0;">
-        <a class="button button-light" href="{{ url_for('profiles.edit_profile', profile_id=profile['id']) }}">✏️ Edit details</a>
-        <a class="button" href="{{ url_for('reports.upload', profile=profile['id']) }}">📤 Upload a report</a>
+        <a class="button button-light" href="{{ url_for('profiles.edit_profile', profile_id=profile['id']) }}">{{ icon('pencil') }} Edit details</a>
+        <a class="button" href="{{ url_for('reports.upload', profile=profile['id']) }}">{{ icon('upload') }} Upload a report</a>
     </div>
 </div>
 
 {% if trends %}
-    <h2 style="margin-top: 32px;">📈 Trends over time</h2>
+    <h2 style="margin-top: 32px;">{{ icon('trending') }} Trends over time</h2>
     <p class="muted small" style="margin-top: -8px;">Dashed lines show the normal range. Tests currently outside the range are shown first.</p>
     <div class="trend-grid">
         {% for t in trends %}
@@ -32,7 +33,7 @@
     </div>
 {% endif %}
 
-<h2 style="margin-top: 32px;">🧾 Reports</h2>
+<h2 style="margin-top: 32px;">{{ icon('file') }} Reports</h2>
 {% if reports %}
     {% for r in reports %}
         <a class="list-row" href="{{ url_for('reports.view_report', report_id=r['id']) }}">
@@ -45,7 +46,7 @@
     {% endfor %}
 {% else %}
     <div class="card empty-state">
-        <div class="emoji">🧾</div>
+        <div class="emoji">{{ icon('file') }} </div>
         <h3>No reports for {{ profile['name'] }} yet</h3>
         <p class="muted">Upload a PDF or photo of a lab report to get started.</p>
         <a class="button" href="{{ url_for('reports.upload', profile=profile['id']) }}">Upload a report</a>
@@ -56,7 +57,7 @@
     <form method="post" action="{{ url_for('profiles.delete_profile', profile_id=profile['id']) }}"
           onsubmit="return confirm('Delete {{ profile['name'] }} and all their reports? This cannot be undone.');"
           style="margin-top: 32px;">
-        <button type="submit" class="button-danger">🗑️ Remove {{ profile['name'] }}</button>
+        <button type="submit" class="button-danger">{{ icon('trash') }} Remove {{ profile['name'] }}</button>
     </form>
 {% endif %}
 {% endblock %}
@@ -71,7 +72,7 @@
     var dark = theme ? theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
     Chart.defaults.color = dark ? "#94a3b8" : "#64748b";
     Chart.defaults.borderColor = dark ? "#23413d" : "#e2e8f0";
-    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+    Chart.defaults.font.family = "'Inter', sans-serif";
 
     trends.forEach(function (t, index) {
         var datasets = [{

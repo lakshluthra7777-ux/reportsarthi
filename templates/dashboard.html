@@ -1,19 +1,20 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 
 {% block title %}My Family - ReportSaathi{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
-        <h1>Namaste, {{ g.user['username'] }} 🙏</h1>
+        <h1>Namaste, {{ g.user['username'] }} </h1>
         <p class="muted" style="margin: 4px 0 0;">Your family's health reports at a glance.</p>
     </div>
-    <a class="button" href="{{ url_for('reports.upload') }}">📤 Upload a report</a>
+    <a class="button" href="{{ url_for('reports.upload') }}">{{ icon('upload') }} Upload a report</a>
 </div>
 
 {% if not ai_enabled %}
     <div class="card tip" style="margin-top: 20px;">
-        🔌 <strong>AI is switched off.</strong> Add your free Gemini API key as <code>GEMINI_API_KEY</code>
+        {{ icon('info') }} <strong>AI is switched off.</strong> Add your free Gemini API key as <code>GEMINI_API_KEY</code>
         in the <code>.env</code> file and restart the app to read new reports. Sample data and
         everything else work without it.
     </div>
@@ -22,23 +23,23 @@
 {% if total_reports == 0 %}
     <section class="card welcome" style="margin-top: 20px;">
         <div>
-            <span class="pill">👋 Welcome to ReportSaathi</span>
+            <span class="pill">Welcome to ReportSaathi</span>
             <h2>No reports yet</h2>
             <p class="muted">Upload a lab report PDF or a phone photo of one. Or load a sample family
                 (you, your mother and father) with real-looking reports from the last two years
                 to see every feature right away.</p>
             <div class="actions">
-                <a class="button button-large" href="{{ url_for('reports.upload') }}">📤 Upload a report</a>
+                <a class="button button-large" href="{{ url_for('reports.upload') }}">{{ icon('upload') }} Upload a report</a>
                 <form method="post" action="{{ url_for('dashboard.sample_data') }}" data-loading="Loading...">
-                    <button type="submit" class="button-light button-large">✨ Load sample data</button>
+                    <button type="submit" class="button-light button-large">Load sample data</button>
                 </form>
             </div>
         </div>
-        <div class="welcome-art" aria-hidden="true">🩺</div>
+        <div class="welcome-art" aria-hidden="true">{{ icon('stethoscope') }} </div>
     </section>
 {% endif %}
 
-<h2>👨‍👩‍👧 Family members</h2>
+<h2>{{ icon('users') }} Family members</h2>
 <div class="profile-grid">
     {% for card in cards %}
         {# The ring colour around the avatar shows the latest report at a glance. #}
@@ -55,11 +56,11 @@
                 <span class="muted small">{{ card['report_count'] }} report{{ '' if card['report_count'] == 1 else 's' }} · latest {{ card['latest_date'] }}</span>
                 <div>
                     {% if card['critical'] %}
-                        <span class="badge badge-critical">🚨 {{ card['critical'] }} needs attention</span>
+                        <span class="badge badge-critical">{{ icon('alert') }} {{ card['critical'] }} needs attention</span>
                     {% elif card['flagged'] %}
                         <span class="badge badge-high">{{ card['flagged'] }} outside range</span>
                     {% else %}
-                        <span class="badge badge-normal">✓ All in range</span>
+                        <span class="badge badge-normal">{{ icon('check') }} All in range</span>
                     {% endif %}
                 </div>
             {% else %}
@@ -71,7 +72,7 @@
 </div>
 
 {% if recent %}
-    <h2 style="margin-top: 36px;">🕒 Recently uploaded</h2>
+    <h2 style="margin-top: 36px;">{{ icon('clock') }} Recently uploaded</h2>
     {% for report in recent %}
         <a class="list-row reveal" href="{{ url_for('reports.view_report', report_id=report['id']) }}">
             <span><strong>{{ report['profile_name'] }}</strong> · {{ report['lab_name'] }}</span>

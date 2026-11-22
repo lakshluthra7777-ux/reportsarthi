@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 
 {# One form for both "add a family member" (profile is None) and "edit a family member". #}
 {% block title %}{{ 'Edit ' ~ profile['name'] if profile else 'Add family member' }} - ReportSaathi{% endblock %}
@@ -12,7 +13,7 @@
 <a class="back-link" href="{{ url_for('profiles.view_profile', profile_id=profile['id']) if profile else url_for('dashboard.dashboard') }}">← Back</a>
 
 <form method="post" class="card upload-form">
-    <h1 style="margin-top: 0;">{{ '✏️ Edit ' ~ profile['name'] if profile else '👤 Add family member' }}</h1>
+    <h1 style="margin-top: 0;">{{ 'Edit ' ~ profile['name'] if profile else 'Add family member' }}</h1>
     <p class="muted">Age and sex help explain results correctly, because normal ranges differ.
         {% if profile %}Changing these doesn't change reports already read.{% endif %}</p>
 
@@ -45,7 +46,7 @@
     </div>
 
     <div class="actions">
-        <button type="submit">💾 Save</button>
+        <button type="submit">{{ icon('check') }} Save</button>
         <a class="button button-light" href="{{ url_for('profiles.view_profile', profile_id=profile['id']) if profile else url_for('dashboard.dashboard') }}">Cancel</a>
     </div>
 </form>

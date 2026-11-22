@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 
 {# One template for two screens:
    mode == "review": check what the AI read from a new upload, before it is saved
@@ -16,14 +17,14 @@
 
 <div class="review-head">
     <div>
-        <span class="pill">{{ '🔎 Step 2 of 2: check' if mode == 'review' else '✏️ Fix a value' }}</span>
+        <span class="pill">{{ 'Step 2 of 2: check' if mode == 'review' else 'Fix a value' }}</span>
         <h1>{{ title }}'s report · {{ info['lab_name'] }}</h1>
         <span class="muted small">Report date {{ info['report_date'] }} · {{ rows|length }} values read by AI</span>
     </div>
 </div>
 
 <div class="card review-tip">
-    <span style="font-size: 1.6rem;">🧐</span>
+    <span style="font-size: 1.6rem;">{{ icon('info') }} </span>
     <div>
         <strong>Compare each value with your paper report.</strong>
         <p class="muted small" style="margin: 4px 0 0;">
@@ -55,7 +56,7 @@
                         <td>
                             <input type="text" name="name_{{ k }}" value="{{ r['name'] }}" maxlength="100"
                                    data-original="{{ r['name'] }}" aria-label="Test name">
-                            {% if r.get('corrected') %}<span class="corrected-tag">✏️ corrected before</span>{% endif %}
+                            {% if r.get('corrected') %}<span class="corrected-tag">{{ icon('pencil') }} corrected before</span>{% endif %}
                         </td>
                         <td>
                             <input type="text" class="value-input narrow" name="value_{{ k }}" value="{{ r['value_text'] }}"
@@ -82,15 +83,15 @@
 </form>
 
 <div class="card review-bar">
-    <span class="accuracy">✏️ <span id="edit-count">0</span> changed · 🗑️ <span id="remove-count">0</span> removed</span>
+    <span class="accuracy">{{ icon('pencil') }} <span id="edit-count">0</span> changed · {{ icon('trash') }} <span id="remove-count">0</span> removed</span>
     <div class="actions">
         {% if mode == 'review' %}
             <button type="submit" form="review-form" name="action" value="discard" class="button-light"
                     formnovalidate onclick="return confirm('Discard this upload? Nothing will be saved.');">Discard</button>
-            <button type="submit" form="review-form" name="action" value="save">✅ Looks right, save report</button>
+            <button type="submit" form="review-form" name="action" value="save">{{ icon('check-circle') }} Looks right, save report</button>
         {% else %}
             <a class="button button-light" href="{{ url_for('reports.view_report', report_id=report['id']) }}">Cancel</a>
-            <button type="submit" form="review-form" name="action" value="save">💾 Save changes</button>
+            <button type="submit" form="review-form" name="action" value="save">{{ icon('check') }} Save changes</button>
         {% endif %}
     </div>
 </div>

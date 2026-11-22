@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 
 {% block title %}{{ report['lab_name'] }} report - ReportSaathi{% endblock %}
 
@@ -13,27 +14,27 @@
 
 {% if counts['critical'] %}
     <div class="critical-banner">
-        🚨 {{ counts['critical'] }} result{{ '' if counts['critical'] == 1 else 's' }} far outside the normal range.
+        {{ icon('alert') }} {{ counts['critical'] }} result{{ '' if counts['critical'] == 1 else 's' }} far outside the normal range.
         Please contact a doctor soon. Don't wait for your next routine visit.
     </div>
 {% endif %}
 
 <div class="review-head" style="margin-bottom: 0;">
-    <span class="pill">🧪 {{ report['lab_name'] }}</span>
+    <span class="pill">{{ icon('flask') }} {{ report['lab_name'] }}</span>
     <div class="actions" style="margin: 0;">
         {# AI accuracy for this report: how many values the user had to correct. #}
         <span class="accuracy" title="Values you corrected after the AI read the report">
-            🤖 AI accuracy {{ ((total - counts['corrected']) * 100 // total) if total else 100 }}%
+            {{ icon('cpu') }} AI accuracy {{ ((total - counts['corrected']) * 100 // total) if total else 100 }}%
             · {{ counts['corrected'] }} of {{ total }} corrected
         </span>
-        <a class="button button-light" href="{{ url_for('reports.edit_report', report_id=report['id']) }}">✏️ Fix a value</a>
-        <a class="button" href="{{ url_for('reports.download_pdf', report_id=report['id']) }}" target="_blank" rel="noopener">⬇️ Download PDF</a>
+        <a class="button button-light" href="{{ url_for('reports.edit_report', report_id=report['id']) }}">{{ icon('pencil') }} Fix a value</a>
+        <a class="button" href="{{ url_for('reports.download_pdf', report_id=report['id']) }}" target="_blank" rel="noopener">{{ icon('download') }} Download PDF</a>
     </div>
 </div>
 <h1 style="margin: 10px 0 4px;">{{ report['profile_name'] }}'s report</h1>
 <p class="muted small" style="margin: 0;">
     Report date {{ report['report_date'] }} · Uploaded {{ report['created_at'][:10] }} ·
-    📎 {{ report['file_name'] }} · Explained in {{ report['language'] }}
+    {{ icon('paperclip') }} {{ report['file_name'] }} · Explained in {{ report['language'] }}
 </p>
 
 {# Health snapshot: score ring + counts + one chip per category (click to jump to it). #}
@@ -50,10 +51,10 @@
     {% endif %}
     <div>
         <h2>
-            {% if score is none %}🧾 Report summary
-            {% elif score >= 85 %}🌿 Looking good overall
-            {% elif score >= 60 %}🔎 A few things to watch
-            {% else %}⚠️ Several values need attention{% endif %}
+            {% if score is none %}{{ icon('file') }} Report summary
+            {% elif score >= 85 %}Looking good overall
+            {% elif score >= 60 %}A few things to watch
+            {% else %}{{ icon('alert') }} Several values need attention{% endif %}
         </h2>
         <div class="count-pills">
             <div class="count-pill"><strong style="color: var(--ok);" data-count="{{ counts['normal'] }}">{{ counts['normal'] }}</strong><span class="small muted">In range</span></div>
@@ -72,11 +73,11 @@
 </section>
 
 <div class="card summary-card reveal">
-    <h3 style="margin-top: 0;">💬 In simple words</h3>
+    <h3 style="margin-top: 0;">{{ icon('message') }} In simple words</h3>
     <p id="summary-text">{{ report['summary'] }}</p>
     {# The browser reads the summary aloud; Hindi uses an Indian Hindi voice if one is installed. #}
     <button type="button" class="button-light listen" data-speak="#summary-text"
-            data-lang="{{ 'hi-IN' if report['language'] == 'Hindi' else 'en-IN' }}">🔊 Listen</button>
+            data-lang="{{ 'hi-IN' if report['language'] == 'Hindi' else 'en-IN' }}">{{ icon('volume') }} Listen</button>
 </div>
 
 {% for category, results in categories.items() %}
@@ -86,7 +87,7 @@
             <div class="result {{ 'flagged' if r['status'] in ('low', 'high', 'abnormal') }}">
                 <div class="result-name">
                     <details>
-                        <summary>{{ r['name'] }}{% if r['corrected'] %}<span class="corrected-tag" title="You corrected what the AI read">✏️ corrected</span>{% endif %}</summary>
+                        <summary>{{ r['name'] }}{% if r['corrected'] %}<span class="corrected-tag" title="You corrected what the AI read">{{ icon('pencil') }} corrected</span>{% endif %}</summary>
                         <p>{{ r['explanation'] }}</p>
                     </details>
                 </div>
@@ -104,7 +105,7 @@
                 </div>
                 <div>
                     {% if r['critical'] %}
-                        <span class="badge badge-critical">🚨 URGENT</span>
+                        <span class="badge badge-critical">{{ icon('alert') }} URGENT</span>
                     {% else %}
                         <span class="badge badge-{{ r['status'] }}">{{ r['status']|upper }}</span>
                     {% endif %}
@@ -116,19 +117,19 @@
 
 <div class="note-layout reveal" style="grid-template-columns: 1fr 1fr; margin-top: 8px;">
     <div class="card">
-        <h3 style="margin-top: 0;">👩‍⚕️ Questions to ask your doctor</h3>
+        <h3 style="margin-top: 0;">{{ icon('stethoscope') }} Questions to ask your doctor</h3>
         <ol class="question-list">
             {% for q in doctor_questions %}<li>{{ q }}</li>{% endfor %}
         </ol>
-        <button type="button" class="button-light" onclick="window.print()">🖨️ Print for the doctor</button>
+        <button type="button" class="button-light" onclick="window.print()">{{ icon('printer') }} Print for the doctor</button>
     </div>
 
     <div class="card" id="ask">
-        <h3 style="margin-top: 0;">❓ Ask about this report</h3>
+        <h3 style="margin-top: 0;">{{ icon('help') }} Ask about this report</h3>
         <p class="muted small" style="margin: 0;">e.g. “Is my sugar level dangerous?” or “What foods help with low haemoglobin?”</p>
         {% for qa in questions %}
             <div class="qa">
-                <div class="q">🙋 {{ qa['question'] }}</div>
+                <div class="q">{{ qa['question'] }}</div>
                 <div class="a">{{ qa['answer'] }}</div>
             </div>
         {% endfor %}
@@ -143,7 +144,7 @@
 <section class="card share-card reveal" id="share">
     <div class="page-header">
         <div>
-            <h3 style="margin: 0;">📤 Share with your doctor</h3>
+            <h3 style="margin: 0;">{{ icon('share') }} Share with your doctor</h3>
             <p class="muted small" style="margin: 4px 0 0;">
                 Make a secret link (and QR code) that opens a read-only copy of this report only.
                 No login needed. It stops working when it expires or when you turn it off.
@@ -153,7 +154,7 @@
             <select name="hours" aria-label="How long the link works">
                 {% for hours, label in share_choices.items() %}<option value="{{ hours }}">Valid {{ label }}</option>{% endfor %}
             </select>
-            <button type="submit">🔗 Create link</button>
+            <button type="submit">{{ icon('link') }} Create link</button>
         </form>
     </div>
 
@@ -164,16 +165,16 @@
             <div class="share-info">
                 <div class="copy-row">
                     <input type="text" value="{{ url }}" readonly aria-label="Share link" id="link-{{ link['id'] }}">
-                    <button type="button" class="button-light" data-copy="#link-{{ link['id'] }}">📋 Copy</button>
+                    <button type="button" class="button-light" data-copy="#link-{{ link['id'] }}">{{ icon('copy') }} Copy</button>
                 </div>
                 <p class="muted small">
-                    ⏳ Expires {{ link['expires_at'] }} UTC · 👁️ Opened {{ link['views'] }} time{{ '' if link['views'] == 1 else 's' }}
+                    ⏳ Expires {{ link['expires_at'] }} UTC · {{ icon('eye') }} Opened {{ link['views'] }} time{{ '' if link['views'] == 1 else 's' }}
                 </p>
                 <div class="actions" style="margin: 0;">
-                    <a class="button button-light" href="{{ url }}" target="_blank" rel="noopener">👀 Preview</a>
+                    <a class="button button-light" href="{{ url }}" target="_blank" rel="noopener">{{ icon('eye') }} Preview</a>
                     <form method="post" action="{{ url_for('reports.revoke_share', report_id=report['id'], link_id=link['id']) }}"
                           onsubmit="return confirm('Turn off this link? Anyone who has it will no longer see the report.');">
-                        <button type="submit" class="button-danger">⛔ Turn off</button>
+                        <button type="submit" class="button-danger">{{ icon('ban') }} Turn off</button>
                     </form>
                 </div>
             </div>
@@ -184,7 +185,7 @@
 
     {% if links and base_url.startswith(('http://127.', 'http://localhost')) %}
         <p class="small share-warning">
-            ⚠️ This link uses <code>{{ base_url }}</code>, which only opens on this computer. For a phone
+            {{ icon('alert') }} This link uses <code>{{ base_url }}</code>, which only opens on this computer. For a phone
             on the same Wi-Fi, set <code>PUBLIC_URL</code> in <code>.env</code> (see README); once the
             app is online, links work anywhere.
         </p>
@@ -192,14 +193,14 @@
 </section>
 
 <div class="disclaimer">
-    ⚠️ ReportSaathi explains reports in simple words using AI and can make mistakes. It does not
+    {{ icon('alert') }} ReportSaathi explains reports in simple words using AI and can make mistakes. It does not
     diagnose illness or suggest medicines. Always check the original report and talk to a
     qualified doctor about your results.
 </div>
 
 <form method="post" action="{{ url_for('reports.delete_report', report_id=report['id']) }}"
       onsubmit="return confirm('Delete this report? This cannot be undone.');" style="margin-top: 20px;">
-    <button type="submit" class="button-danger">🗑️ Delete this report</button>
+    <button type="submit" class="button-danger">{{ icon('trash') }} Delete this report</button>
 </form>
 {% endblock %}
 
@@ -222,8 +223,8 @@
             (navigator.clipboard ? navigator.clipboard.writeText(input.value) : Promise.reject())
                 .catch(function () { document.execCommand("copy"); })
                 .finally(function () {
-                    button.textContent = "✅ Copied!";
-                    setTimeout(function () { button.textContent = "📋 Copy"; }, 1800);
+                    button.textContent = "Copied!";
+                    setTimeout(function () { button.textContent = "Copy"; }, 1800);
                 });
         });
     });
