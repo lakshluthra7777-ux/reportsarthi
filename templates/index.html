@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <span class="pill">🩺 AI lab-report explainer</span>
+        <h1>Understand your <span class="gradient-text">blood test reports</span> in simple words</h1>
+        <p class="muted">
+            Upload a PDF or just a phone photo of any lab report. ReportSaathi reads every value,
+            flags what's outside the normal range, explains it in English, Hindi or Hinglish,
+            and tracks your family's results over time.
+        </p>
+        <div class="actions">
+            <a class="button button-large" href="{{ url_for('auth.register') }}">Get started, it's free →</a>
+            <a class="button button-light button-large" href="{{ url_for('auth.login') }}">Log in</a>
+        </div>
+    </div>
+
+    <!-- A picture made of HTML: what a result row looks like. -->
+    <div class="preview" aria-hidden="true">
+        <div class="card">
+            <span class="badge badge-low">LOW</span>
+            <h3 style="margin: 8px 0 4px;">Haemoglobin</h3>
+            <div class="result-value value-low">10.8 <span class="small muted">g/dL</span></div>
+            <div class="range-bar"><span class="range-dot dot-low" style="left: 12%"></span></div>
+            <span class="range-text">Normal: 12.0 – 15.0</span>
+        </div>
+        <div class="card">
+            <strong>💬 In simple words</strong>
+            <p class="small muted">Haemoglobin carries oxygen in your blood. Slightly low levels
+                can cause tiredness. Ask your doctor whether an iron test is needed.</p>
+        </div>
+    </div>
+</section>
+
+{# Animated numbers: fx.js counts each one up from 0 when the page loads. #}
+<section class="card stat-strip reveal">
+    <div><strong data-count="40" data-suffix="+">40+</strong><span class="muted small">common tests recognised</span></div>
+    <div><strong data-count="3">3</strong><span class="muted small">languages: English, Hindi, Hinglish</span></div>
+    <div><strong data-count="30" data-suffix="s">30s</strong><span class="muted small">to read a full report</span></div>
+    <div><strong data-count="0">0</strong><span class="muted small">report files stored, ever</span></div>
+</section>
+
+<h2 class="section-title">Why ReportSaathi?</h2>
+<section class="features">
+    <div class="card feature tilt reveal">
+        <div class="feature-icon">📷</div>
+        <h3>Photo or PDF</h3>
+        <p class="muted">Works with lab PDFs, scanned reports and phone photos.</p>
+    </div>
+    <div class="card feature tilt reveal">
+        <div class="feature-icon">🚦</div>
+        <h3>Clear flags</h3>
+        <p class="muted">Every value colour-coded low, normal or high, with a visual range bar.</p>
+    </div>
+    <div class="card feature tilt reveal">
+        <div class="feature-icon">🗣️</div>
+        <h3>Your language</h3>
+        <p class="muted">Simple explanations in English, Hindi or Hinglish.</p>
+    </div>
+    <div class="card feature tilt reveal">
+        <div class="feature-icon">👨‍👩‍👧</div>
+        <h3>Whole family</h3>
+        <p class="muted">Keep reports for parents and children in one place.</p>
+    </div>
+    <div class="card feature tilt reveal">
+        <div class="feature-icon">📈</div>
+        <h3>Trends</h3>
+        <p class="muted">See how sugar, cholesterol or thyroid values change over the years.</p>
+    </div>
+    <div class="card feature tilt reveal">
+        <div class="feature-icon">👩‍⚕️</div>
+        <h3>Doctor-ready</h3>
+        <p class="muted">Get a list of good questions to ask at your next appointment.</p>
+    </div>
+</section>
+
+<section class="steps-list">
+    <div class="profile-top"><span class="step-number">1</span><span>Add family members</span></div>
+    <div class="profile-top"><span class="step-number">2</span><span>Upload a report PDF or photo</span></div>
+    <div class="profile-top"><span class="step-number">3</span><span>Read the explanation and track trends</span></div>
+</section>
+{% endblock %}

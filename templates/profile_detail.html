@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profile['name'] }} - ReportSaathi{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('dashboard.dashboard') }}">← My family</a>
+
+<div class="page-header">
+    <div class="profile-top">
+        <span class="profile-avatar">{{ profile['name'][0] }}</span>
+        <div>
+            <h1 style="margin: 0;">{{ profile['name'] }}</h1>
+            <span class="muted">{{ profile['relation'] }}{% if profile['sex'] %} · {{ profile['sex'] }}{% endif %}{% if age %} · {{ age }} years{% endif %}</span>
+        </div>
+    </div>
+    <a class="button" href="{{ url_for('reports.upload', profile=profile['id']) }}">📤 Upload a report</a>
+</div>
+
+{% if trends %}
+    <h2 style="margin-top: 32px;">📈 Trends over time</h2>
+    <p class="muted small" style="margin-top: -8px;">Dashed lines show the normal range. Tests currently outside the range are shown first.</p>
+    <div class="trend-grid">
+        {% for t in trends %}
+            <div class="card trend-card reveal">
+                <h3>{{ t['name'] }} <span class="badge badge-{{ t['last_status'] }}">{{ t['last_status']|upper }}</span></h3>
+                <canvas id="trend-{{ loop.index }}"></canvas>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<h2 style="margin-top: 32px;">🧾 Reports</h2>
+{% if reports %}
+    {% for r in reports %}
+        <a class="list-row" href="{{ url_for('reports.view_report', report_id=r['id']) }}">
+            <span><strong>{{ r['report_date'] }}</strong> · {{ r['lab_name'] }}</span>
+            <span class="muted small">{{ r['tests'] }} tests
+                {% if r['flagged'] %}· <span class="badge badge-high">{{ r['flagged'] }} outside range</span>
+                {% else %}· <span class="badge badge-normal">all in range</span>{% endif %}
+            </span>
+        </a>
+    {% endfor %}
+{% else %}
+    <div class="card empty-state">
+        <div class="emoji">🧾</div>
+        <h3>No reports for {{ profile['name'] }} yet</h3>
+        <p class="muted">Upload a PDF or photo of a lab report to get started.</p>
+        <a class="button" href="{{ url_for('reports.upload', profile=profile['id']) }}">Upload a report</a>
+    </div>
+{% endif %}
+
+{% if profile['relation'] != 'Self' %}
+    <form method="post" action="{{ url_for('profiles.delete_profile', profile_id=profile['id']) }}"
+          onsubmit="return confirm('Delete {{ profile['name'] }} and all their reports? This cannot be undone.');"
+          style="margin-top: 32px;">
+        <button type="submit" class="button-danger">🗑️ Remove {{ profile['name'] }}</button>
+    </form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if trends %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    // Trend data from Python (routes/profiles.py). |tojson makes it safe JavaScript.
+    var trends = {{ trends|tojson }};
+    var theme = document.documentElement.dataset.theme;
+    var dark = theme ? theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    Chart.defaults.color = dark ? "#94a3b8" : "#64748b";
+    Chart.defaults.borderColor = dark ? "#23413d" : "#e2e8f0";
+    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+
+    trends.forEach(function (t, index) {
+        var datasets = [{
+            label: t.name + (t.unit ? " (" + t.unit + ")" : ""),
+            data: t.values,
+            borderColor: "#0d9488",
+            backgroundColor: "#0d9488",
+            pointRadius: 5,
+            cubicInterpolationMode: "monotone",
+        }];
+        // Normal range limits as flat dashed lines.
+        [["Upper limit", t.high, "#dc2626"], ["Lower limit", t.low, "#2563eb"]].forEach(function (line) {
+            if (line[1] !== null) {
+                datasets.push({
+                    label: line[0],
+                    data: t.dates.map(function () { return line[1]; }),
+                    borderColor: line[2],
+                    borderDash: [6, 6],
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                });
+            }
+        });
+        new Chart(document.getElementById("trend-" + (index + 1)), {
+            type: "line",
+            data: { labels: t.dates, datasets: datasets },
+            options: { plugins: { legend: { display: false } } },
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

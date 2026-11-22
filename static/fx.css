@@ -1,0 +1,390 @@
+/* ReportSaathi visual effects: aurora background, glass cards, animations.
+   Loaded after style.css and app.css, so these rules win where they overlap.
+   Everything respects "reduce motion" (see the end of this file). */
+
+/* @property lets the browser animate a custom number smoothly (used by the score ring). */
+@property --p {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+}
+
+/* ---------- Aurora background: three huge blurred blobs drifting slowly ---------- */
+body {
+    background-image: none;
+}
+
+.aurora {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.aurora span {
+    position: absolute;
+    width: 46vmax;
+    height: 46vmax;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.35;
+    animation: drift 26s ease-in-out infinite alternate;
+}
+
+.aurora span:nth-child(1) { background: #14b8a6; top: -18vmax; left: -10vmax; }
+.aurora span:nth-child(2) { background: #3b82f6; top: 10vmax; right: -16vmax; animation-duration: 32s; }
+.aurora span:nth-child(3) { background: #a855f7; bottom: -22vmax; left: 25vw; opacity: 0.22; animation-duration: 38s; }
+
+@keyframes drift {
+    to { transform: translate(8vmax, 6vmax) scale(1.15); }
+}
+
+/* ---------- Glass cards ---------- */
+.card {
+    background: color-mix(in srgb, var(--surface) 72%, transparent);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border-color: color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.navbar {
+    background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+/* ---------- Theme switch ---------- */
+.theme-toggle {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 1.1rem;
+    box-shadow: none;
+}
+
+.theme-toggle:hover {
+    transform: rotate(20deg);
+    box-shadow: none;
+}
+
+/* ---------- Scroll reveal: elements fade up when they come into view ---------- */
+.reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* ---------- 3D tilt (the angle is set by fx.js as --rx / --ry) ---------- */
+.tilt {
+    transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 0.15s ease-out, box-shadow 0.15s;
+    will-change: transform;
+}
+
+/* A card that both fades in and tilts: keep the tilt once it is visible, with a quick transition. */
+.tilt.reveal.visible {
+    transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: opacity 0.6s ease, transform 0.15s ease-out, box-shadow 0.15s;
+}
+
+/* ---------- Health snapshot on the report page ---------- */
+.snapshot {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 32px;
+    align-items: center;
+    margin: 20px 0;
+    padding: 28px;
+}
+
+.score-ring {
+    --p: 0;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: conic-gradient(var(--ring-colour) calc(var(--p) * 1%), color-mix(in srgb, var(--border) 60%, transparent) 0);
+    animation: fill-ring 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    box-shadow: 0 0 40px color-mix(in srgb, var(--ring-colour) 35%, transparent);
+}
+
+@keyframes fill-ring {
+    to { --p: var(--score); }
+}
+
+.score-ring::before {
+    content: "";
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    background: var(--surface);
+}
+
+.score-ring div {
+    position: relative;
+    text-align: center;
+}
+
+.score-ring strong {
+    display: block;
+    font-size: 2.8rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.score-good { --ring-colour: #10b981; }
+.score-fair { --ring-colour: #f59e0b; }
+.score-poor { --ring-colour: #ef4444; }
+
+.snapshot h2 {
+    margin: 0 0 6px;
+    font-size: 1.6rem;
+}
+
+.category-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.category-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 60%, transparent);
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.category-chip:hover {
+    border-color: var(--primary);
+}
+
+.dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+.dot-ok   { background: var(--ok); }
+.dot-flag { background: var(--high); box-shadow: 0 0 8px var(--high); }
+
+.listen {
+    margin-top: 12px;
+}
+
+.listen.speaking {
+    animation: glow 1.2s ease-in-out infinite;
+}
+
+@keyframes glow {
+    50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--primary) 25%, transparent); }
+}
+
+/* Range dot pops into place, flagged rows get a soft glowing edge. */
+.range-dot {
+    animation: pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: 0.3s;
+}
+
+@keyframes pop {
+    from { transform: translate(-50%, -50%) scale(0); }
+}
+
+.result.flagged {
+    box-shadow: inset 4px 0 0 var(--high);
+}
+
+.result {
+    transition: background 0.2s;
+}
+
+.result:hover {
+    background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+
+.critical-banner {
+    animation: pulse-red 2s ease-in-out infinite;
+}
+
+@keyframes pulse-red {
+    50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0.18); }
+}
+
+/* ---------- AI scanning overlay (upload page) ---------- */
+.scan-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    place-items: center;
+    background: color-mix(in srgb, var(--background) 70%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.scan-overlay.show {
+    display: grid;
+    animation: fade-in 0.3s ease;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+}
+
+.scan-box {
+    width: min(360px, 90vw);
+    padding: 32px;
+    text-align: center;
+}
+
+/* A drawing of a document, with a glowing line moving down it. */
+.scan-doc {
+    position: relative;
+    width: 140px;
+    height: 180px;
+    margin: 0 auto 24px;
+    padding: 18px 16px;
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.scan-doc i {
+    display: block;
+    height: 8px;
+    margin-bottom: 12px;
+    border-radius: 4px;
+    background: var(--border);
+}
+
+.scan-doc i:nth-child(2n) { width: 70%; }
+.scan-doc i:nth-child(3n) { width: 85%; background: color-mix(in srgb, var(--high) 40%, var(--border)); }
+
+.scan-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary);
+    box-shadow: 0 0 18px 4px var(--primary);
+    animation: scan 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes scan {
+    from { top: 6%; }
+    to   { top: 94%; }
+}
+
+.scan-step {
+    min-height: 1.6em;
+    font-weight: 700;
+    transition: opacity 0.3s;
+}
+
+.scan-progress {
+    height: 6px;
+    margin-top: 16px;
+    border-radius: 999px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+.scan-progress div {
+    height: 100%;
+    width: 0;
+    background: var(--gradient);
+    transition: width 1s linear;
+}
+
+/* ---------- Dashboard: status ring around each person's avatar ---------- */
+.profile-avatar {
+    outline: 3px solid transparent;
+    outline-offset: 3px;
+}
+
+.ring-ok   { outline-color: var(--ok); }
+.ring-flag { outline-color: var(--warn); }
+.ring-bad  { outline-color: var(--high); animation: pulse-red 2s ease-in-out infinite; }
+
+/* ---------- Landing page ---------- */
+.hero h1 .gradient-text {
+    background-size: 200% 200%;
+    background-image: linear-gradient(120deg, #14b8a6, #3b82f6, #a855f7, #14b8a6);
+    animation: shimmer 8s linear infinite;
+}
+
+@keyframes shimmer {
+    to { background-position: 200% 0; }
+}
+
+.preview .card {
+    animation: float-card 6s ease-in-out infinite;
+}
+
+.preview .card + .card {
+    animation-delay: -3s;
+}
+
+@keyframes float-card {
+    50% { translate: 0 -10px; }
+}
+
+.stat-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin: 8px 0 48px;
+    text-align: center;
+}
+
+.stat-strip strong {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+@media (max-width: 800px) {
+    .snapshot {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+    }
+
+    .category-chips {
+        justify-content: center;
+    }
+}
+
+/* ---------- Respect "reduce motion" in the operating system's accessibility settings ---------- */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .reveal {
+        opacity: 1;
+        transform: none;
+    }
+}

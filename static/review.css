@@ -1,0 +1,150 @@
+/* Review / fix-a-value screen. */
+
+.review-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.review-head h1 {
+    margin: 8px 0 4px;
+}
+
+.review-tip {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--primary);
+}
+
+.review-table {
+    padding: 0;
+    overflow-x: auto;
+}
+
+.review-table table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+}
+
+.review-table th {
+    position: sticky;
+    top: 0;
+    padding: 12px 10px;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.review-table td {
+    padding: 8px 10px;
+    border-top: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.review-table input[type="text"] {
+    margin: 0;
+    padding: 8px 10px;
+    font-size: 0.95rem;
+}
+
+.review-table .value-input {
+    font-weight: 800;
+}
+
+.review-table .narrow {
+    width: 90px;
+}
+
+.ai-said {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 0.75rem;
+}
+
+.ai-said[hidden] {
+    display: none;  /* "display: block" above would otherwise beat the hidden attribute */
+}
+
+/* A row the user changed glows in the theme colour; a row marked for removal fades out. */
+tr.edited td {
+    background: color-mix(in srgb, var(--primary) 9%, transparent);
+}
+
+tr.edited td:first-child {
+    box-shadow: inset 4px 0 0 var(--primary);
+}
+
+tr.removing td {
+    opacity: 0.4;
+    text-decoration: line-through;
+}
+
+.remove-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.remove-box input {
+    width: auto;
+    margin: 0;
+}
+
+.review-bar {
+    position: sticky;
+    bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 14px 20px;
+}
+
+.review-bar .actions {
+    margin: 0;
+}
+
+.review-bar form,
+.review-bar .actions form {
+    margin: 0;
+}
+
+.accuracy {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.corrected-tag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    vertical-align: middle;
+}

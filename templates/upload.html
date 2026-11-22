@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Upload report - ReportSaathi{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('dashboard.dashboard') }}">← Back</a>
+
+{# enctype="multipart/form-data" is required for the browser to send a file. #}
+<form method="post" enctype="multipart/form-data" class="card upload-form"
+      data-loading="Reading your report..." data-scan>
+    <h1 style="margin-top: 0;">📤 Upload a lab report</h1>
+    <p class="muted">A PDF from the lab, a scanned copy or a clear phone photo all work.</p>
+
+    <div class="form-row" style="grid-template-columns: 1fr 1fr;">
+        <div>
+            <label for="profile_id">Whose report is this?</label>
+            <select id="profile_id" name="profile_id" required>
+                {% for p in profiles %}
+                    <option value="{{ p['id'] }}" {{ 'selected' if p['id'] == selected }}>{{ p['name'] }} ({{ p['relation'] }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="language">Explain in</label>
+            <select id="language" name="language">
+                {% for lang in languages %}<option>{{ lang }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+    <p class="small muted">Not in the list? <a href="{{ url_for('profiles.create_profile') }}">Add a family member</a></p>
+
+    <label for="report">Report file</label>
+    <label class="dropzone" for="report">
+        <span class="emoji">📄📷</span>
+        <span id="file-name">Click to choose a PDF or photo</span>
+        <span class="small">PDF up to 20 MB · JPG, PNG or WEBP up to 5 MB</span>
+        <input id="report" name="report" type="file" required
+               accept="application/pdf,image/jpeg,image/png,image/webp">
+    </label>
+
+    <div class="privacy-note">
+        🔒 <span>Your file is sent securely to the AI to be read, then thrown away. Only the test
+            values and explanations are saved, never the file itself.</span>
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="button-large">🔍 Read my report</button>
+    </div>
+</form>
+
+{# Shown by fx.js while the AI reads the report: a document with a moving scan line. #}
+<div class="scan-overlay" id="scan-overlay" role="status" aria-live="polite">
+    <div class="card scan-box">
+        <div class="scan-doc" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            <span class="scan-line"></span>
+        </div>
+        <div class="scan-step">📄 Opening your report...</div>
+        <div class="scan-progress"><div></div></div>
+        <p class="muted small">AI is reading every value. This usually takes 20–40 seconds.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById("report").addEventListener("change", function () {
+        var name = this.files.length ? this.files[0].name : "Click to choose a PDF or photo";
+        document.getElementById("file-name").textContent = name;
+    });
+</script>
+{% endblock %}

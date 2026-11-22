@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Add family member - ReportSaathi{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('dashboard.dashboard') }}">← Back</a>
+
+<form method="post" class="card upload-form">
+    <h1 style="margin-top: 0;">👤 Add family member</h1>
+    <p class="muted">Age and sex help explain results correctly, because normal ranges differ.</p>
+
+    <label for="name">Name</label>
+    <input id="name" name="name" maxlength="50" required placeholder="e.g. Sunita"
+           value="{{ request.form.get('name', '') }}">
+
+    <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
+        <div>
+            <label for="relation">Relation</label>
+            <select id="relation" name="relation" required>
+                {% for r in relations %}<option {{ 'selected' if request.form.get('relation') == r }}>{{ r }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="sex">Sex</label>
+            <select id="sex" name="sex" required>
+                {% for s in sexes %}<option {{ 'selected' if request.form.get('sex') == s }}>{{ s }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="birth_year">Birth year</label>
+            <input id="birth_year" name="birth_year" type="number" min="1900" max="2100"
+                   placeholder="e.g. 1968" value="{{ request.form.get('birth_year', '') }}">
+        </div>
+    </div>
+
+    <div class="actions">
+        <button type="submit">Save</button>
+        <a class="button button-light" href="{{ url_for('dashboard.dashboard') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

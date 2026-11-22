@@ -1,0 +1,110 @@
+# ReportSaathi: AI Lab-Report Explainer
+
+**Problem:** Millions of people in India get blood tests every year but can't read the
+reports: dozens of values, medical terms and reference ranges, and little time with a
+doctor to ask questions. Families often manage reports for elderly parents, on paper or
+WhatsApp, with no easy way to see whether sugar or cholesterol is getting better or worse.
+
+**Solution:** ReportSaathi reads a lab report (a PDF or just a phone photo) with AI,
+extracts every test value, flags what's outside the normal range, explains it in simple
+English, Hindi or Hinglish, suggests questions to ask the doctor, and tracks each family
+member's results over time with charts.
+
+> Final Year Project, B.Tech
+
+## Features
+
+| Feature | How it works |
+|---|---|
+| Read any report | PDF, scanned PDF or phone photo sent to Google's Gemini API, which reads documents and images directly (multimodal) |
+| Structured extraction | A **JSON Schema** forces the AI to return every test as name, value, unit and reference range |
+| Reliable flags | Our code (`ranges.py`), not the AI, decides low/normal/high for every numeric value |
+| Check before saving | **Human-in-the-loop review screen**: the user compares the AI's values with the paper report, fixes or removes rows (status updates live), then saves |
+| Fix a value later | Any saved report can be corrected; corrected values are marked ✏️ |
+| AI accuracy | Each report shows how many values the user had to correct, e.g. "AI accuracy 95% · 1 of 20 corrected" |
+| Plain-language explanations | Summary, per-test explanation and doctor questions in **English, Hindi or Hinglish** |
+| Urgent alerts | Values far outside the range get an URGENT badge and a red banner |
+| Family profiles | One account manages Self, Mother, Father...; age and sex are sent to the AI for context |
+| Trend charts | Tests are given standard names (e.g. "Hb" becomes "Haemoglobin") so the same test can be compared across reports; Chart.js draws them with the normal range |
+| Compare with last report | Each value shows "was X on date" from the previous report |
+| Ask about a report | Questions answered using only that report's results |
+| Privacy by design | The uploaded file is never stored; only the extracted values are kept |
+| Security | Password hashing, parameterised SQL, per-user access checks, file-type check by magic bytes, upload size limits, HttpOnly cookies |
+| Demo mode | "Load sample data" adds a family with 6 reports, no API key needed |
+| Testing | 42 automated pytest tests; the AI is replaced with fakes |
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python 3, Flask (Blueprints) |
+| Database | SQLite (built-in `sqlite3`, plain SQL), 5 tables |
+| AI | Gemini API (`google-genai` library, free tier): PDF and image input, structured JSON outputs |
+| Frontend | HTML, CSS (no framework), Jinja2, vanilla JavaScript, Chart.js |
+| Testing | pytest |
+
+## Folder structure
+
+```
+reportsaathi/
+├── app.py              # Creates the Flask app, registers blueprints, error pages
+├── database.py         # SQLite connection, creates tables
+├── schema.sql          # users, profiles, reports, results, questions
+├── ai.py               # Gemini API: read_report() and ask_about_report()
+├── ranges.py           # parse_number() and decide_status(): low / normal / high
+├── helpers.py          # login_required, ownership checks, save_report()
+├── sample_data.py      # Demo family and reports
+├── routes/
+│   ├── auth.py             # register, login, logout
+│   ├── dashboard.py        # family overview, load sample data
+│   ├── profiles.py         # add family member, report history, trends
+│   └── reports.py          # upload, results page, ask a question, delete
+├── templates/          # Jinja2 pages (all extend base.html)
+├── static/             # style.css (base design), app.css (results, charts)
+├── tests/test_app.py   # 42 tests
+└── docs/VIVA_PREP.md   # Architecture, design decisions, report outline, viva Q&A
+```
+
+## Setup (Windows)
+
+Requirements: Python 3.10 or newer, and a free Gemini API key from
+https://aistudio.google.com (needed only to read new reports).
+
+1. Open a terminal in the `reportsaathi` folder.
+2. Create and activate a virtual environment, then install the libraries:
+
+   ```
+   py -m venv venv
+   venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+3. Copy `.env.example` to `.env`. Put your Gemini API key in `GEMINI_API_KEY`
+   and any long random text in `SECRET_KEY`.
+4. Run the app:
+
+   ```
+   python app.py
+   ```
+
+5. Open http://127.0.0.1:5000, register, then either upload a report or click
+   **Load sample data**.
+
+## Running the tests
+
+```
+python -m pytest
+```
+
+## Limitations and future scope
+
+- AI can misread a blurry photo. The original report should always be checked, and
+  a future version could let users correct a value before saving.
+- Not a medical device: it explains results, it does not diagnose.
+- On Gemini's free tier, Google may use submitted content to improve its products. Demo
+  with sample data or reports with names covered; a real deployment would use a paid
+  tier with a data-processing agreement.
+- No CSRF tokens yet (Flask-WTF would add them); HTTPS is needed when deployed.
+- Future: encrypt health data at rest, share a report with a doctor through a link,
+  WhatsApp upload, medicine and appointment reminders, more Indian languages,
+  PostgreSQL and cloud deployment.

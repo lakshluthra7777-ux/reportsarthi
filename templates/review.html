@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{# One template for two screens:
+   mode == "review": check what the AI read from a new upload, before it is saved
+   mode == "edit":   fix values in a report that was already saved                 #}
+{% block title %}{{ 'Check the values' if mode == 'review' else 'Fix a value' }} - ReportSaathi{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='review.css') }}">
+{% endblock %}
+
+{% block content %}
+{% if mode == 'edit' %}
+    <a class="back-link" href="{{ url_for('reports.view_report', report_id=report['id']) }}">← Back to report</a>
+{% endif %}
+
+<div class="review-head">
+    <div>
+        <span class="pill">{{ '🔎 Step 2 of 2: check' if mode == 'review' else '✏️ Fix a value' }}</span>
+        <h1>{{ title }}'s report · {{ info['lab_name'] }}</h1>
+        <span class="muted small">Report date {{ info['report_date'] }} · {{ rows|length }} values read by AI</span>
+    </div>
+</div>
+
+<div class="card review-tip">
+    <span style="font-size: 1.6rem;">🧐</span>
+    <div>
+        <strong>Compare each value with your paper report.</strong>
+        <p class="muted small" style="margin: 4px 0 0;">
+            AI can misread a blurry photo. Type over anything that's wrong; the status updates
+            as you type. Tick “Remove” for a row that isn't a real test (for example a heading).
+            Your corrections are counted to measure how accurate the AI is.
+        </p>
+    </div>
+</div>
+
+<form method="post" id="review-form">
+    <div class="card review-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Test</th>
+                    <th>Value</th>
+                    <th>Unit</th>
+                    <th>Normal from</th>
+                    <th>Normal to</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                    {% set k = r['key'] %}
+                    <tr data-row data-fallback="{{ r['status'] }}">
+                        <td>
+                            <input type="text" name="name_{{ k }}" value="{{ r['name'] }}" maxlength="100"
+                                   data-original="{{ r['name'] }}" aria-label="Test name">
+                            {% if r.get('corrected') %}<span class="corrected-tag">✏️ corrected before</span>{% endif %}
+                        </td>
+                        <td>
+                            <input type="text" class="value-input narrow" name="value_{{ k }}" value="{{ r['value_text'] }}"
+                                   maxlength="50" data-field="value" data-original="{{ r['value_text'] }}" aria-label="Value">
+                            <span class="ai-said" hidden>AI read: {{ r['value_text'] }}</span>
+                        </td>
+                        <td><input type="text" class="narrow" name="unit_{{ k }}" value="{{ r['unit'] }}" maxlength="30"
+                                   data-original="{{ r['unit'] }}" aria-label="Unit"></td>
+                        <td><input type="text" class="narrow" name="low_{{ k }}" value="{{ format_number(r['ref_low']) }}"
+                                   data-field="low" data-original="{{ format_number(r['ref_low']) }}" aria-label="Lowest normal value"></td>
+                        <td><input type="text" class="narrow" name="high_{{ k }}" value="{{ format_number(r['ref_high']) }}"
+                                   data-field="high" data-original="{{ format_number(r['ref_high']) }}" aria-label="Highest normal value"></td>
+                        <td><span class="badge badge-{{ r['status'] }}" data-status>{{ r['status']|upper }}</span></td>
+                        <td>
+                            <label class="remove-box">
+                                <input type="checkbox" name="remove_{{ k }}" value="1"> Remove
+                            </label>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</form>
+
+<div class="card review-bar">
+    <span class="accuracy">✏️ <span id="edit-count">0</span> changed · 🗑️ <span id="remove-count">0</span> removed</span>
+    <div class="actions">
+        {% if mode == 'review' %}
+            <button type="submit" form="review-form" name="action" value="discard" class="button-light"
+                    formnovalidate onclick="return confirm('Discard this upload? Nothing will be saved.');">Discard</button>
+            <button type="submit" form="review-form" name="action" value="save">✅ Looks right, save report</button>
+        {% else %}
+            <a class="button button-light" href="{{ url_for('reports.view_report', report_id=report['id']) }}">Cancel</a>
+            <button type="submit" form="review-form" name="action" value="save">💾 Save changes</button>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Live preview: the same rules as ranges.py, so the badge shows what will be saved.
+    function parseNumber(text) {
+        var cleaned = String(text).replace(/,/g, "").trim().replace(/^[<>=≤≥ ]+/, "").trim();
+        return /^-?\d+(\.\d+)?$/.test(cleaned) ? Number(cleaned) : null;
+    }
+
+    function decideStatus(value, low, high, fallback) {
+        if (value !== null && (low !== null || high !== null)) {
+            if (low !== null && value < low) return "low";
+            if (high !== null && value > high) return "high";
+            return "normal";
+        }
+        return ["low", "normal", "high", "abnormal"].indexOf(fallback) >= 0 ? fallback : "unknown";
+    }
+
+    function refresh() {
+        var edited = 0, removed = 0;
+        document.querySelectorAll("tr[data-row]").forEach(function (row) {
+            var inputs = row.querySelectorAll("input[type=text]");
+            var changed = Array.prototype.some.call(inputs, function (input) {
+                return input.value.trim() !== input.dataset.original;
+            });
+            var removing = row.querySelector("input[type=checkbox]").checked;
+            row.classList.toggle("edited", changed && !removing);
+            row.classList.toggle("removing", removing);
+            row.querySelector(".ai-said").hidden = !changed;
+            if (removing) removed++; else if (changed) edited++;
+
+            if (changed) {  // only recompute when something changed; otherwise keep the saved status
+                var value = parseNumber(row.querySelector("[data-field=value]").value);
+                var low = parseNumber(row.querySelector("[data-field=low]").value);
+                var high = parseNumber(row.querySelector("[data-field=high]").value);
+                var status = decideStatus(value, low, high, row.dataset.fallback);
+                var badge = row.querySelector("[data-status]");
+                badge.className = "badge badge-" + status;
+                badge.textContent = status.toUpperCase();
+            }
+        });
+        document.getElementById("edit-count").textContent = edited;
+        document.getElementById("remove-count").textContent = removed;
+    }
+
+    document.getElementById("review-form").addEventListener("input", refresh);
+    document.getElementById("review-form").addEventListener("change", refresh);
+</script>
+{% endblock %}

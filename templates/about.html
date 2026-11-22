@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}About - ReportSaathi{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 760px; margin: 0 auto; padding: 32px;">
+    <span class="pill">About the project</span>
+    <h1>About <span class="gradient-text">ReportSaathi</span></h1>
+    <p>
+        Millions of people in India get blood tests every year but find the reports hard to read:
+        dozens of values, medical terms and ranges, and often no time with the doctor to ask
+        questions. ReportSaathi is a final year B.Tech project that uses AI to read a lab report
+        (PDF or photo), flag values outside the normal range, explain them in simple English,
+        Hindi or Hinglish, and track a family's results over time.
+    </p>
+    <h3>Built with</h3>
+    <div class="chips">
+        <span class="chip">🐍 Python</span>
+        <span class="chip">🌶️ Flask</span>
+        <span class="chip">🗄️ SQLite</span>
+        <span class="chip">👁️ Gemini API (vision + PDF)</span>
+        <span class="chip">🧩 Structured outputs</span>
+        <span class="chip">📈 Chart.js</span>
+    </div>
+    <h3>Important</h3>
+    <p class="muted">ReportSaathi helps you understand reports. It does not diagnose illness or
+        suggest medicines. Always discuss your results with a qualified doctor.</p>
+</div>
+{% endblock %}

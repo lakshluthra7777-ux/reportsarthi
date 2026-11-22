@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ code }} - ReportSaathi{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <p class="error-code gradient-text">{{ code }}</p>
+    <h2>{{ message }}</h2>
+    <p class="muted">The page may have moved, or the link may be wrong.</p>
+    <a class="button" href="{{ url_for('home') }}">← Go home</a>
+</div>
+{% endblock %}
