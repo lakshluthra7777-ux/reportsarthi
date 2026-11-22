@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Account - ReportSaathi{% endblock %}
+
+{% block content %}
+<div class="upload-form">
+    <div class="page-header">
+        <div class="profile-top">
+            <span class="profile-avatar">{{ g.user['username'][0] }}</span>
+            <div>
+                <h1 style="margin: 0;">{{ g.user['username'] }}</h1>
+                <span class="muted small">Member since {{ g.user['created_at'][:10] }} ·
+                    {{ stats['profiles'] }} family member{{ '' if stats['profiles'] == 1 else 's' }} ·
+                    {{ stats['reports'] }} report{{ '' if stats['reports'] == 1 else 's' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" action="{{ url_for('auth.change_password') }}" class="card" style="margin-top: 24px;">
+        <h2 style="margin-top: 0;">🔑 Change password</h2>
+        <label for="current_password">Current password</label>
+        <input id="current_password" name="current_password" type="password" required autocomplete="current-password">
+
+        <div class="form-row" style="grid-template-columns: 1fr 1fr;">
+            <div>
+                <label for="new_password">New password</label>
+                <input id="new_password" name="new_password" type="password" minlength="8" required
+                       autocomplete="new-password" placeholder="At least 8 characters">
+            </div>
+            <div>
+                <label for="confirm_password">Repeat new password</label>
+                <input id="confirm_password" name="confirm_password" type="password" minlength="8" required
+                       autocomplete="new-password">
+            </div>
+        </div>
+        <div class="actions"><button type="submit">Change password</button></div>
+    </form>
+
+    <form method="post" action="{{ url_for('auth.delete_account') }}" class="card danger-zone"
+          onsubmit="return confirm('Delete your account, all family members and ALL their reports forever? This cannot be undone.');">
+        <h2 style="margin-top: 0;">⚠️ Delete my account</h2>
+        <p class="muted">This permanently deletes your account, all {{ stats['profiles'] }} family
+            member{{ '' if stats['profiles'] == 1 else 's' }}, all {{ stats['reports'] }}
+            report{{ '' if stats['reports'] == 1 else 's' }} and every share link. It cannot be undone.
+            Download any PDFs you want to keep first.</p>
+        <label for="delete_password">Type your password to confirm</label>
+        <input id="delete_password" name="password" type="password" required autocomplete="current-password">
+        <div class="actions"><button type="submit" class="button-danger">🗑️ Delete everything</button></div>
+    </form>
+</div>
+{% endblock %}

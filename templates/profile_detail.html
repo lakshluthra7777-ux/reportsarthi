@@ -13,7 +13,10 @@
             <span class="muted">{{ profile['relation'] }}{% if profile['sex'] %} · {{ profile['sex'] }}{% endif %}{% if age %} · {{ age }} years{% endif %}</span>
         </div>
     </div>
-    <a class="button" href="{{ url_for('reports.upload', profile=profile['id']) }}">📤 Upload a report</a>
+    <div class="actions" style="margin: 0;">
+        <a class="button button-light" href="{{ url_for('profiles.edit_profile', profile_id=profile['id']) }}">✏️ Edit details</a>
+        <a class="button" href="{{ url_for('reports.upload', profile=profile['id']) }}">📤 Upload a report</a>
+    </div>
 </div>
 
 {% if trends %}

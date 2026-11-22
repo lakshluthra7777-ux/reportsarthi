@@ -13,23 +13,31 @@ RELATIONS = ["Self", "Mother", "Father", "Spouse", "Son", "Daughter", "Grandpare
 SEXES = ["Female", "Male", "Other"]
 
 
+def read_profile_form(fixed_relation=None):
+    """Read and check the family-member form. Returns (name, relation, sex, birth_year, error).
+
+    `fixed_relation` is used for your own profile: it always stays "Self".
+    """
+    name = request.form.get("name", "").strip()
+    relation = fixed_relation or request.form.get("relation", "")
+    sex = request.form.get("sex", "")
+    birth_year = request.form.get("birth_year", type=int)
+
+    error = None
+    if not name or len(name) > 50:
+        error = "Please enter a name (at most 50 characters)."
+    elif relation not in RELATIONS or sex not in SEXES:
+        error = "Please choose a relation and sex from the lists."
+    elif birth_year is not None and not 1900 <= birth_year <= date.today().year:
+        error = "Please enter a valid birth year."
+    return name, relation, sex, birth_year, error
+
+
 @bp.route("/new", methods=["GET", "POST"])
 @login_required
 def create_profile():
     if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        relation = request.form.get("relation", "")
-        sex = request.form.get("sex", "")
-        birth_year = request.form.get("birth_year", type=int)
-
-        error = None
-        if not name or len(name) > 50:
-            error = "Please enter a name (at most 50 characters)."
-        elif relation not in RELATIONS or sex not in SEXES:
-            error = "Please choose a relation and sex from the lists."
-        elif birth_year is not None and not 1900 <= birth_year <= date.today().year:
-            error = "Please enter a valid birth year."
-
+        name, relation, sex, birth_year, error = read_profile_form()
         if error:
             flash(error, "error")
         else:
@@ -41,7 +49,29 @@ def create_profile():
             db.commit()
             flash(f"Added {name}.", "success")
             return redirect(url_for("profiles.view_profile", profile_id=profile_id))
-    return render_template("profile_form.html", relations=RELATIONS, sexes=SEXES)
+    return render_template("profile_form.html", relations=RELATIONS, sexes=SEXES, profile=None)
+
+
+@bp.route("/<int:profile_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_profile(profile_id):
+    """Change a family member's details. Their reports stay as they are."""
+    profile = get_own_profile(profile_id)
+    is_self = profile["relation"] == "Self"
+    if request.method == "POST":
+        name, relation, sex, birth_year, error = read_profile_form("Self" if is_self else None)
+        if error:
+            flash(error, "error")
+        else:
+            db = get_db()
+            db.execute(
+                "UPDATE profiles SET name = ?, relation = ?, sex = ?, birth_year = ? WHERE id = ?",
+                (name, relation, sex, birth_year, profile_id),
+            )
+            db.commit()
+            flash(f"Saved {name}'s details.", "success")
+            return redirect(url_for("profiles.view_profile", profile_id=profile_id))
+    return render_template("profile_form.html", relations=RELATIONS, sexes=SEXES, profile=profile)
 
 
 @bp.route("/<int:profile_id>")

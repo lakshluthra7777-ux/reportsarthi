@@ -388,6 +388,12 @@ footer a {
     max-height: 200px;
 }
 
+/* ---------- Account page ---------- */
+.danger-zone {
+    margin-top: 24px;
+    border: 1px solid color-mix(in srgb, var(--high) 45%, transparent);
+}
+
 /* ---------- Upload ---------- */
 .upload-form {
     max-width: 680px;

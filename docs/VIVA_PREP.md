@@ -254,6 +254,18 @@ with names blacked out) and record accuracy. Real numbers make the results chapt
 - **Why does the patient's page and the doctor's page always match?** Both use the same
   `report_details()` helper and the same `range_bar` macro (`templates/_macros.html`).
 
+### Account features
+
+- **Why ask for the current password when changing it?** So someone using an unlocked
+  computer, or a stolen login cookie, can't take over the account by setting a new password.
+- **How does "Delete my account" remove everything?** One `DELETE FROM users` row. Every other
+  table is linked with `ON DELETE CASCADE` (users → profiles → reports → results, questions,
+  share links, pending reports), and `PRAGMA foreign_keys = ON` makes SQLite enforce it. A test
+  checks that all tables are empty afterwards. This supports the user's right to erase their
+  health data (as in India's DPDP Act, 2023).
+- **Why can't your own profile change from "Self"?** The app relies on exactly one "Self"
+  profile per account (created at registration), so the form locks it.
+
 ### Download as PDF
 
 - **How is the PDF made?** `/reports/<id>/pdf` renders a plain white A4-shaped page
@@ -297,7 +309,7 @@ with names blacked out) and record accuracy. Real numbers make the results chapt
 
 21. **How did you test without spending money on the API?**
     pytest with Flask's test client, a fresh temporary database per test, and
-    `monkeypatch` replacing the AI functions with fakes. 52 tests cover login, PDF downloads, the review and correction flow, share links (expiry, revoking, access), the database migration, access
+    `monkeypatch` replacing the AI functions with fakes. 61 tests cover login, account settings, PDF downloads, the review and correction flow, share links (expiry, revoking, access), the database migration, access
     control, file validation, extraction cleaning, the status logic, sample data, trends,
     Q&A and deletion.
 

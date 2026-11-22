@@ -26,6 +26,7 @@ member's results over time with charts.
 | Share with doctor | A secret link + **QR code** opens a read-only, printable copy of one report without login; it expires (24 h / 3 days / 7 days), can be turned off, and counts views |
 | Plain-language explanations | Summary, per-test explanation and doctor questions in **English, Hindi or Hinglish** |
 | Urgent alerts | Values far outside the range get an URGENT badge and a red banner |
+| Account settings | Edit any family member's details; change password (needs the current one); delete the account and all its data |
 | Family profiles | One account manages Self, Mother, Father...; age and sex are sent to the AI for context |
 | Trend charts | Tests are given standard names (e.g. "Hb" becomes "Haemoglobin") so the same test can be compared across reports; Chart.js draws them with the normal range |
 | Compare with last report | Each value shows "was X on date" from the previous report |
@@ -33,7 +34,7 @@ member's results over time with charts.
 | Privacy by design | The uploaded file is never stored; only the extracted values are kept |
 | Security | Password hashing, parameterised SQL, per-user access checks, file-type check by magic bytes, upload size limits, HttpOnly cookies |
 | Demo mode | "Load sample data" adds a family with 6 reports, no API key needed |
-| Testing | 52 automated pytest tests; the AI is replaced with fakes |
+| Testing | 61 automated pytest tests; the AI is replaced with fakes |
 
 ## Tech stack
 
@@ -63,7 +64,7 @@ reportsaathi/
 │   └── reports.py          # upload, results page, ask a question, delete
 ├── templates/          # Jinja2 pages (all extend base.html)
 ├── static/             # style.css (base design), app.css (results, charts)
-├── tests/test_app.py   # 52 tests
+├── tests/test_app.py   # 61 tests
 └── docs/VIVA_PREP.md   # Architecture, design decisions, report outline, viva Q&A
 ```
 

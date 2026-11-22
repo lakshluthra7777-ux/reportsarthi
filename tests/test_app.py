@@ -123,6 +123,69 @@ def test_invalid_profile_is_rejected(client):
     assert b"choose a relation" in response.data
 
 
+def test_edit_family_member(client):
+    register_and_login(client)
+    client.post("/profiles/new", data={"name": "Sunita", "relation": "Mother", "sex": "Female", "birth_year": "1968"})
+    page = client.get("/profiles/2/edit")
+    assert b'value="Sunita"' in page.data and b'value="1968"' in page.data
+    page = client.post("/profiles/2/edit",
+                       data={"name": "Sunita Sharma", "relation": "Mother", "sex": "Female", "birth_year": "1966"},
+                       follow_redirects=True)
+    assert b"Saved Sunita Sharma" in page.data
+    assert str(date.today().year - 1966).encode() + b" years" in page.data
+
+
+def test_own_profile_stays_self(client):
+    register_and_login(client)
+    client.post("/profiles/1/edit", data={"name": "Asha", "relation": "Father", "sex": "Female"})
+    assert b"Self" in client.get("/profiles/1").data   # relation can't be changed away from Self
+
+
+def test_cannot_edit_someone_elses_profile(client):
+    register_and_login(client, "asha")
+    client.get("/logout")
+    register_and_login(client, "ravi")
+    assert client.get("/profiles/1/edit").status_code == 404
+
+
+def test_change_password(client):
+    register_and_login(client)
+    assert b"Change password" in client.get("/account").data
+    page = client.post("/account/password", follow_redirects=True, data={
+        "current_password": "secret123", "new_password": "newpass456", "confirm_password": "newpass456"})
+    assert b"Password changed" in page.data
+    client.get("/logout")
+    assert client.post("/login", data={"username": "asha", "password": "secret123"}).status_code == 200  # old fails
+    assert client.post("/login", data={"username": "asha", "password": "newpass456"}).status_code == 302  # new works
+
+
+@pytest.mark.parametrize("form, message", [
+    ({"current_password": "wrong", "new_password": "newpass456", "confirm_password": "newpass456"}, b"not correct"),
+    ({"current_password": "secret123", "new_password": "short", "confirm_password": "short"}, b"at least 8"),
+    ({"current_password": "secret123", "new_password": "newpass456", "confirm_password": "other4567"}, b"don&#39;t match"),
+    ({"current_password": "secret123", "new_password": "secret123", "confirm_password": "secret123"}, b"must be different"),
+])
+def test_change_password_rules(client, form, message):
+    register_and_login(client)
+    page = client.post("/account/password", data=form, follow_redirects=True)
+    assert message in page.data
+
+
+def test_delete_account_removes_everything(client):
+    register_and_login(client)
+    client.post("/dashboard/sample-data")
+    page = client.post("/account/delete", data={"password": "wrong"}, follow_redirects=True)
+    assert b"was not deleted" in page.data
+
+    page = client.post("/account/delete", data={"password": "secret123"}, follow_redirects=True)
+    assert b"permanently deleted" in page.data
+    import sqlite3
+    db = sqlite3.connect(reportsaathi.app.config["DATABASE"])
+    for table in ("users", "profiles", "reports", "results"):
+        assert db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0  # ON DELETE CASCADE
+    assert client.get("/dashboard").status_code == 302  # logged out
+
+
 def test_cannot_delete_last_profile(client):
     register_and_login(client)
     response = client.post("/profiles/1/delete", follow_redirects=True)
