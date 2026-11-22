@@ -1,0 +1,17 @@
+# Render Blueprint: creates the ReportSaathi web service from this repository.
+services:
+  - type: web
+    name: reportsaathi
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # One worker (SQLite), a few threads; long timeout because reading a report with AI can take a while.
+    startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 300
+    healthCheckPath: /about
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false   # entered by hand in the Render dashboard, never stored in Git

@@ -123,3 +123,16 @@ python -m pytest
 - Future: encrypt health data at rest, share a report with a doctor through a link,
   WhatsApp upload, medicine and appointment reminders, more Indian languages,
   PostgreSQL and cloud deployment.
+
+## Deploying on Render
+
+The repository includes `render.yaml`, so Render can create the service automatically:
+
+1. On https://render.com, sign in with GitHub and choose **New → Blueprint**.
+2. Pick this repository. Render reads `render.yaml` (Gunicorn, Python 3.12, free plan) and generates `SECRET_KEY`.
+3. When asked, paste your `GEMINI_API_KEY`. Click **Apply**.
+4. The app is served at `https://<service-name>.onrender.com`. Every push to `main` redeploys it.
+
+Note: on Render's free plan the disk is temporary, so the SQLite database is reset on every restart or redeploy,
+and the service sleeps after 15 minutes without visitors (the first request then takes about a minute).
+Use **Load sample family** on the dashboard for demos.

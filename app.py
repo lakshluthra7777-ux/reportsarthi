@@ -10,6 +10,7 @@ import os
 
 from dotenv import load_dotenv
 from flask import Flask, g, redirect, render_template, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from database import close_db, init_db
 from routes import auth, dashboard, profiles, reports, shared
@@ -23,10 +24,21 @@ app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # reject uploads bigger tha
 app.config["SESSION_COOKIE_NAME"] = "reportsaathi_session"  # own cookie, separate from other local apps
 app.config["SESSION_COOKIE_HTTPONLY"] = True  # JavaScript can't read the login cookie
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # cookie isn't sent on most cross-site requests
+# On a host like Render the app runs behind an HTTPS proxy: trust its headers so share links use https://,
+# and only send the login cookie over HTTPS.
+if os.environ.get("RENDER"):
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    app.config["SESSION_COOKIE_SECURE"] = True
+    if app.config["SECRET_KEY"] == "dev-only-secret":
+        raise RuntimeError("Set SECRET_KEY in the host's environment settings.")
 app.teardown_appcontext(close_db)  # close the DB connection after every request
 
 for module in (auth, dashboard, profiles, reports, shared):
     app.register_blueprint(module.bp)
+
+# Create any missing tables when the app starts (also under Gunicorn, which never runs __main__ below).
+with app.app_context():
+    init_db()
 
 
 @app.route("/")
@@ -59,8 +71,6 @@ def server_error(error):
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        init_db()  # creates reportsaathi.db and any missing tables
     # HOST=0.0.0.0 in .env lets phones on the same Wi-Fi open the app (e.g. to scan a share QR).
     host = os.environ.get("HOST", "127.0.0.1")
     # Debug mode (auto-reload + error pages with a code console) is only safe on this computer:
